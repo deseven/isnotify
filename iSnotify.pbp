@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.31 (Windows - x86)">
+  <section name="config">
+    <options closefiles="1" openmode="0" name="iSnotify"/>
+  </section>
+  <section name="data">
+    <explorer view="S:\misc\work\ntest3\" pattern="0"/>
+    <log show="1"/>
+    <lastopen date="2015-08-15 20:53" user="deseven" host="DE7PC"/>
+  </section>
+  <section name="files">
+    <file name="const.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="df6e2d0002b4a530ded347320bccbe71"/>
+    </file>
+    <file name="main.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="e4bda8a4e4f806bc2d049b38586d8429"/>
+    </file>
+    <file name="mod\megaplan.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
+      <fingerprint md5="0a688815a978d0985e17ff7e119f5df3"/>
+    </file>
+    <file name="mod\portal.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
+      <fingerprint md5="5f4f022b8b410226f5207842e2ca3dcd"/>
+    </file>
+    <file name="mod\prtg.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
+      <fingerprint md5="3047a1b05407bc8ba4ad9c28f49cbdf7"/>
+    </file>
+    <file name="proc.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="424c17d4c08b4bba0f218d7ed7851977"/>
+    </file>
+    <file name="updater.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="18dda0290d87ca2c62ea0739e8198517"/>
+    </file>
+  </section>
+  <section name="targets">
+    <target name="isn" enabled="1" default="1">
+      <inputfile value="main.pb"/>
+      <outputfile value="build\isn.exe"/>
+      <executable value="build\isn.exe"/>
+      <options unicode="1" thread="1" xpskin="1" debug="1"/>
+      <temporaryexe value="source"/>
+      <icon enable="1">res\main.ico</icon>
+      <buildcount enable="1" value="4"/>
+    </target>
+    <target name="isn_upd" enabled="1" default="0">
+      <inputfile value="updater.pb"/>
+      <outputfile value="build\isn_upd.exe"/>
+      <executable value="build\isn_upd.exe"/>
+      <options unicode="1" thread="1" xpskin="1" debug="1"/>
+      <temporaryexe value="source"/>
+      <buildcount enable="1" value="3"/>
+    </target>
+  </section>
+</project>
