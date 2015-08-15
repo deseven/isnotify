@@ -1,8 +1,8 @@
 ﻿EnableExplicit
 UsePNGImageDecoder()
 IncludeFile "../pb-win-notify/wnotify.pbi"
-IncludeFile "curl/libcurl-res.pb"
-IncludeFile "curl/libcurl-inc.pb"
+IncludeFile "lib/libcurl-res.pbi"
+IncludeFile "lib/libcurl-inc.pbi"
 IncludeFile "const.pb"
 
 EnableExplicit

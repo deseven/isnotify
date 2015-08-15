@@ -1,9 +1,9 @@
 ﻿#myName = "iSnotify"
-#myVer = "0.3.0"
+#myVer = "0.4.0"
 #aboutstr = #myName+" "+#myVer+#CRLF$+"written by deseven, 2015"+#CRLF$+#CRLF$+"web: deseven.info"+#CRLF$+"mail: de7@deseven.info"
 #myDefUtime = 10
 #trayUpdate = 500
-#checkUpdateTime = 60
+#checkUpdateTime = 30
 #curlTimeout = 30
 
 #portalBgColor = $c9a380

@@ -7,16 +7,20 @@
   <section name="data">
     <explorer view="S:\misc\work\ntest3\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2015-08-15 20:53" user="deseven" host="DE7PC"/>
+    <lastopen date="2015-08-16 00:43" user="deseven" host="DE7PC"/>
   </section>
   <section name="files">
     <file name="const.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="df6e2d0002b4a530ded347320bccbe71"/>
+      <fingerprint md5="b92d9ae7f55cf37a00270fc71c0e2a92"/>
+    </file>
+    <file name="installer.pb">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="9d3da9f0b885d07e533ed884766c9766"/>
     </file>
     <file name="main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="e4bda8a4e4f806bc2d049b38586d8429"/>
+      <fingerprint md5="97f2132a5a4511901fe56e045430d575"/>
     </file>
     <file name="mod\megaplan.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
@@ -36,26 +40,36 @@
     </file>
     <file name="updater.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="18dda0290d87ca2c62ea0739e8198517"/>
+      <fingerprint md5="de9e2650859cd87da2ce96f4b6a02937"/>
     </file>
   </section>
   <section name="targets">
-    <target name="isn" enabled="1" default="1">
+    <target name="isn" enabled="1" default="0">
       <inputfile value="main.pb"/>
       <outputfile value="build\isn.exe"/>
       <executable value="build\isn.exe"/>
       <options unicode="1" thread="1" xpskin="1" debug="1"/>
       <temporaryexe value="source"/>
       <icon enable="1">res\main.ico</icon>
-      <buildcount enable="1" value="4"/>
+      <buildcount enable="1" value="14"/>
     </target>
     <target name="isn_upd" enabled="1" default="0">
       <inputfile value="updater.pb"/>
       <outputfile value="build\isn_upd.exe"/>
+      <commandline value="0.4.0"/>
       <executable value="build\isn_upd.exe"/>
       <options unicode="1" thread="1" xpskin="1" debug="1"/>
       <temporaryexe value="source"/>
-      <buildcount enable="1" value="3"/>
+      <buildcount enable="1" value="14"/>
+    </target>
+    <target name="isn_install" enabled="1" default="1">
+      <inputfile value="installer.pb"/>
+      <outputfile value="build\isn_install.exe"/>
+      <executable value="build\isn_install.exe"/>
+      <options unicode="1" thread="1" xpskin="1" admin="1" debug="1"/>
+      <temporaryexe value="source"/>
+      <icon enable="1">res\main.ico</icon>
+      <buildcount enable="1" value="14"/>
     </target>
   </section>
 </project>
