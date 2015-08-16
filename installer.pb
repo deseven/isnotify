@@ -32,7 +32,8 @@ If FileSize(myDir) <> -2
 EndIf
 
 UseModule Registry
-If Not WriteValue(#HKEY_CURRENT_USER,"\Software\Microsoft\Windows\CurrentVersion\Run","iSnotify",myDir + "\isn.exe", #REG_SZ)
+DeleteValue(#HKEY_CURRENT_USER,"\Software\Microsoft\Windows\CurrentVersion\Run","iSnotify")
+If Not WriteValue(#HKEY_CURRENT_USER,"\Software\Microsoft\Windows\CurrentVersion\Run","iSnotify",myDir + "\isn.exe",#REG_SZ)
   MessageBox_(0,"Не удалось добавить " + #myName + " в автозагрузку.",#myName,#MB_OK|#MB_ICONERROR)
   End 5
 EndIf
