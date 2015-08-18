@@ -77,7 +77,7 @@ Procedure toLog(msg.s,type.b = #lInfo)
       logtype = "[INFO] "
   EndSelect
   If enableDebug
-    log = GetEnvironmentVariable("HOME") + "/.config/" + #myName + "/debug.log"
+    log = GetEnvironmentVariable("APPDATA") + "\" + #myName + "\debug.log"
     LockMutex(logLock)
     If OpenFile(0,log,#PB_File_Append)
       WriteStringN(0,logdate + logtype + msg)
@@ -132,8 +132,8 @@ EndProcedure
 Procedure settings(mode.b)
   Shared enableDebug.b,selfUpdate.b,notifyTimeout.w
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
-  Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b
-  Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b
+  Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
+  Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
   Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgTime.w,prtgPos.b,prtgRepeatAlert.b,prtgAlertAfter.w
   Protected config.s = GetEnvironmentVariable("APPDATA") + "/" + #myName
   If FileSize(config) <> -2 : CreateDirectory(config) : EndIf
@@ -172,12 +172,22 @@ Procedure settings(mode.b)
     megaplanPass = encDec(ReadPreferenceString("password",""),#decode)
     megaplanTime = ReadPreferenceLong("update_time",30)
     megaplanPos = ReadPreferenceLong("notify_position",#wnRB)
+    If ReadPreferenceString("repeat_alert","no") = "yes"
+      megaplanRepeatAlert = #True
+    Else
+      megaplanRepeatAlert = #False
+    EndIf
     PreferenceGroup("portal")
     portalURL = ReadPreferenceString("url","")
     portalLogin = ReadPreferenceString("login","")
     portalPass = encDec(ReadPreferenceString("password",""),#decode)
     portalTime = ReadPreferenceLong("update_time",30)
     portalPos = ReadPreferenceLong("notify_position",#wnRB)
+    If ReadPreferenceString("repeat_alert","no") = "yes"
+      portalRepeatAlert = #True
+    Else
+      portalRepeatAlert = #False
+    EndIf
     PreferenceGroup("prtg")
     prtgURL = ReadPreferenceString("url","")
     prtgLogin = ReadPreferenceString("login","")
@@ -223,12 +233,22 @@ Procedure settings(mode.b)
     WritePreferenceString("password",encDec(megaplanPass,#encode))
     WritePreferenceLong("update_time",megaplanTime)
     WritePreferenceLong("notify_position",megaplanPos)
+    If megaplanRepeatAlert
+      WritePreferenceString("repeat_alert","yes")
+    Else
+      WritePreferenceString("repeat_alert","no")
+    EndIf
     PreferenceGroup("portal")
     WritePreferenceString("url",portalURL)
     WritePreferenceString("login",portalLogin)
     WritePreferenceString("password",encDec(portalPass,#encode))
     WritePreferenceLong("update_time",portalTime)
     WritePreferenceLong("notify_position",portalPos)
+    If portalRepeatAlert
+      WritePreferenceString("repeat_alert","yes")
+    Else
+      WritePreferenceString("repeat_alert","no")
+    EndIf
     PreferenceGroup("prtg")
     WritePreferenceString("url",prtgURL)
     WritePreferenceString("login",prtgLogin)
@@ -248,8 +268,8 @@ EndProcedure
 Procedure populateInternal()
   Shared enableDebug.b,selfUpdate.b,notifyTimeout.w
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
-  Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b
-  Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b
+  Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
+  Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
   Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgTime.w,prtgPos.b,prtgRepeatAlert.b,prtgAlertAfter.w
   If GetGadgetState(#cbEnableDebug) = #PB_Checkbox_Checked
     enableDebug = #True
@@ -272,6 +292,11 @@ Procedure populateInternal()
   megaplanPass = GetGadgetText(#strMegaplanPass)
   megaplanPos = GetGadgetState(#comMegaplanPos)
   megaplanTime = GetGadgetState(#tbMegaplanTime)*10
+  If GetGadgetState(#cbMegaplanRepeatAlert) = #PB_Checkbox_Checked
+    megaplanRepeatAlert = #True
+  Else
+    megaplanRepeatAlert = #False
+  EndIf
   If GetGadgetState(#cbPortalEnabled) = #PB_Checkbox_Checked
     enablePortal = #True
   Else
@@ -282,6 +307,11 @@ Procedure populateInternal()
   portalPass = GetGadgetText(#strPortalPass)
   portalPos = GetGadgetState(#comPortalPos)
   portalTime = GetGadgetState(#tbPortalTime)*10
+  If GetGadgetState(#cbPortalRepeatAlert) = #PB_Checkbox_Checked
+    portalRepeatAlert = #True
+  Else
+    portalRepeatAlert = #False
+  EndIf
   If GetGadgetState(#cbPRTGEnabled) = #PB_Checkbox_Checked
     enablePRTG = #True
   Else
@@ -303,8 +333,8 @@ EndProcedure
 Procedure populateGUI()
   Shared enableDebug.b,selfUpdate.b,notifyTimeout.w
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
-  Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b
-  Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b
+  Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
+  Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
   Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgTime.w,prtgPos.b,prtgRepeatAlert.b,prtgAlertAfter.w
   If enableDebug
     SetGadgetState(#cbEnableDebug,#PB_Checkbox_Checked)
@@ -339,12 +369,22 @@ Procedure populateGUI()
   SetGadgetState(#comMegaplanPos,megaplanPos)
   SetGadgetState(#tbMegaplanTime,megaplanTime/10)
   SetGadgetText(#capMegaplanTime,"Обновлять каждые " + Str(megaplanTime) + " сек")
+  If megaplanRepeatAlert
+    SetGadgetState(#cbMegaplanRepeatAlert,#PB_Checkbox_Checked)
+  Else
+    SetGadgetState(#cbMegaplanRepeatAlert,#PB_Checkbox_Unchecked)
+  EndIf
   SetGadgetText(#strPortalURL,portalURL)
   SetGadgetText(#strPortalLogin,portalLogin)
   SetGadgetText(#strPortalPass,portalPass)
   SetGadgetState(#comPortalPos,portalPos)
   SetGadgetState(#tbPortalTime,portalTime/10)
   SetGadgetText(#capPortalTime,"Обновлять каждые " + Str(portalTime) + " сек")
+  If portalRepeatAlert
+    SetGadgetState(#cbPortalRepeatAlert,#PB_Checkbox_Checked)
+  Else
+    SetGadgetState(#cbPortalRepeatAlert,#PB_Checkbox_Unchecked)
+  EndIf
   SetGadgetText(#strPRTGURL,prtgURL)
   SetGadgetText(#strPRTGLogin,prtgLogin)
   SetGadgetText(#strPRTGPass,prtgPass)
@@ -353,9 +393,9 @@ Procedure populateGUI()
   SetGadgetText(#capPRTGTime,"Обновлять каждые " + Str(prtgTime) + " сек")
   SetGadgetState(#tbPRTGAlertAfter,prtgAlertAfter/10)
   If prtgAlertAfter
-    SetGadgetText(#capPRTGAlertAfter,"Уведомлять после " + Str(prtgAlertAfter) + " сек падения")
+    SetGadgetText(#capPRTGAlertAfter,"Уведомлять после " + Str(prtgAlertAfter) + " сек")
   Else
-    SetGadgetText(#capPRTGAlertAfter,"Уведомлять сразу после падения")
+    SetGadgetText(#capPRTGAlertAfter,"Уведомлять сразу")
   EndIf
   If prtgRepeatAlert
     SetGadgetState(#cbPRTGRepeatAlert,#PB_Checkbox_Checked)
@@ -367,8 +407,8 @@ EndProcedure
 Procedure checkSettings()
   Shared enableDebug.b,selfUpdate.b,notifyTimeout.w
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
-  Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b
-  Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b
+  Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
+  Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
   Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgTime.w,prtgPos.b,prtgRepeatAlert.b,prtgAlertAfter.w
   Shared iconMegaplanConn.i,iconPortalConn.i,iconPRTGConn.i
   If enableMegaplan

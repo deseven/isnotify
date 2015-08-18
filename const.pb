@@ -1,5 +1,5 @@
 ﻿#myName = "iSnotify"
-#myVer = "0.5.0"
+#myVer = "0.5.1"
 #aboutstr = #myName+" "+#myVer+#CRLF$+"written by deseven, 2015"+#CRLF$+#CRLF$+"web: deseven.info"+#CRLF$+"mail: de7@deseven.info"
 #myDefUtime = 10
 #trayUpdate = 500
@@ -60,8 +60,10 @@ Enumeration main
   #comPRTGPos
   #capMegaplanTime
   #tbMegaplanTime
+  #cbMegaplanRepeatAlert
   #capPortalTime
   #tbPortalTime
+  #cbPortalRepeatAlert
   #capPRTGTime
   #tbPRTGTime
   #cbPRTGRepeatAlert

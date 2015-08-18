@@ -18,8 +18,8 @@ Define enableDebug.b = #False
 Define selfUpdate.b = #True
 Define notifyTimeout.w = 3000
 Define enableMegaplan.b,enablePortal.b,enablePRTG.b
-Define megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b
-Define portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b
+Define megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
+Define portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
 Define prtgURL.s,prtgLogin.s,prtgPass.s,prtgTime.w,prtgPos.b,prtgRepeatAlert.b,prtgAlertAfter.w
 Define iconMy.i
 Define iconMegaplanOk.i,iconMegaplanConn.i,iconMegaplanAlert.i
@@ -59,9 +59,12 @@ StickyWindow(#wnd,#True)
 PanelGadget(#panTabs,10,10,380,340)
 AddGadgetItem(#panTabs,#tabMain,"Основные",iconMy)
 CheckBoxGadget(#cbEnableSelfUpdate,10,5,360,20,"Проверять обновления")
+GadgetToolTip(#cbEnableSelfUpdate,"Автоматически проверять обновления каждые 2 часа")
 CheckBoxGadget(#cbEnableDebug,10,25,360,20,"Вести лог")
+GadgetToolTip(#cbEnableDebug,"Сохранять подробный лог действий в " + GetEnvironmentVariable("APPDATA") +"\" + #myName + "\debug.log")
 TrackBarGadget(#tbNotifyTimeout,5,50,365,30,3,100)
 TextGadget(#capNotifyTimeout,10,80,360,20,"",#PB_Text_Center)
+GadgetToolTip(#tbNotifyTimeout,"Сколько секунд показываются уведомления перед тем как исчезнуть")
 AddGadgetItem(#panTabs,#tabMegaplan,"Мегаплан",iconMegaplanOk)
 CheckBoxGadget(#cbMegaplanEnabled,10,5,360,20,"Включен")
 TextGadget(#capMegaplanURL,10,32,100,20,"HTTPS host[:port]")
@@ -78,8 +81,12 @@ AddGadgetItem(#comMegaplanPos,#wnCT,"Центр сверху")
 AddGadgetItem(#comMegaplanPos,#wnCB,"Центр снизу")
 AddGadgetItem(#comMegaplanPos,#wnRT,"Справа сверху")
 AddGadgetItem(#comMegaplanPos,#wnRB,"Справа снизу")
-TrackBarGadget(#tbMegaplanTime,5,145,365,30,1,12)
-TextGadget(#capMegaplanTime,10,175,360,20,"",#PB_Text_Center)
+GadgetToolTip(#comMegaplanPos,"В какой части экрана показывать уведомления")
+CheckBoxGadget(#cbMegaplanRepeatAlert,270,122,100,20,"Повторять")
+GadgetToolTip(#cbMegaplanRepeatAlert,"Показывать уведомления заново при каждой проверке")
+TrackBarGadget(#tbMegaplanTime,5,160,365,30,1,12)
+TextGadget(#capMegaplanTime,10,190,360,20,"",#PB_Text_Center)
+GadgetToolTip(#tbMegaplanTime,"Интервал между запросами новых уведомлений")
 AddGadgetItem(#panTabs,#tabPortal,"Портал",iconPortalOk)
 CheckBoxGadget(#cbPortalEnabled,10,5,360,20,"Включен")
 TextGadget(#capPortalURL,10,32,100,20,"HTTP host[:port]")
@@ -96,8 +103,12 @@ AddGadgetItem(#comPortalPos,#wnCT,"Центр сверху")
 AddGadgetItem(#comPortalPos,#wnCB,"Центр снизу")
 AddGadgetItem(#comPortalPos,#wnRT,"Справа сверху")
 AddGadgetItem(#comPortalPos,#wnRB,"Справа снизу")
-TrackBarGadget(#tbPortalTime,5,145,365,30,1,12)
-TextGadget(#capPortalTime,10,175,360,20,"",#PB_Text_Center)
+GadgetToolTip(#comPortalPos,"В какой части экрана показывать уведомления")
+CheckBoxGadget(#cbPortalRepeatAlert,270,122,100,20,"Повторять")
+GadgetToolTip(#cbPortalRepeatAlert,"Показывать уведомления заново при каждой проверке")
+TrackBarGadget(#tbPortalTime,5,160,365,30,1,12)
+TextGadget(#capPortalTime,10,190,360,20,"",#PB_Text_Center)
+GadgetToolTip(#tbPortalTime,"Интервал между запросами новых уведомлений")
 AddGadgetItem(#panTabs,#tabPRTG,"PRTG",iconPRTGOk)
 CheckBoxGadget(#cbPRTGEnabled,10,5,360,20,"Включен")
 TextGadget(#capPRTGURL,10,32,100,20,"HTTP host[:port]")
@@ -114,11 +125,15 @@ AddGadgetItem(#comPRTGPos,#wnCT,"Центр сверху")
 AddGadgetItem(#comPRTGPos,#wnCB,"Центр снизу")
 AddGadgetItem(#comPRTGPos,#wnRT,"Справа сверху")
 AddGadgetItem(#comPRTGPos,#wnRB,"Справа снизу")
-TrackBarGadget(#tbPRTGTime,5,145,365,30,1,12)
-TextGadget(#capPRTGTime,10,175,360,20,"",#PB_Text_Center)
-TrackBarGadget(#tbPRTGAlertAfter,5,200,365,30,0,60)
-TextGadget(#capPRTGAlertAfter,10,230,360,20,"",#PB_Text_Center)
-CheckBoxGadget(#cbPRTGRepeatAlert,10,260,360,20,"Повторять уведомления")
+GadgetToolTip(#comPRTGPos,"В какой части экрана показывать уведомления")
+CheckBoxGadget(#cbPRTGRepeatAlert,270,122,100,20,"Повторять")
+GadgetToolTip(#cbPRTGRepeatAlert,"Показывать уведомления заново при каждой проверке")
+TrackBarGadget(#tbPRTGTime,5,160,365,30,1,12)
+TextGadget(#capPRTGTime,10,190,360,20,"",#PB_Text_Center)
+GadgetToolTip(#tbPRTGTime,"Интервал между запросами новых уведомлений")
+TrackBarGadget(#tbPRTGAlertAfter,5,215,365,30,0,60)
+TextGadget(#capPRTGAlertAfter,10,245,360,20,"",#PB_Text_Center)
+GadgetToolTip(#tbPRTGAlertAfter,"Показывать уведомление только если неисправность произошла более X секунд назад")
 CloseGadgetList()
 ButtonGadget(#btnApply,290,360,100,30,"Применить",#PB_Button_Default)
 ButtonGadget(#btnCancel,180,360,100,30,"Отмена")
@@ -158,7 +173,7 @@ If Not (enableMegaplan Or enablePortal Or enablePRTG)
 EndIf
 
 ; for debuging purposes
-;HideWindow(#wnd,#False)
+HideWindow(#wnd,#False)
 
 Repeat
   ev = WaitWindowEvent(50)
@@ -334,9 +349,9 @@ Repeat
         SetGadgetText(#capPRTGTime,"Обновлять каждые " + Str(GetGadgetState(#tbPRTGTime)*10) + " сек")
       Case #tbPRTGAlertAfter
         If GetGadgetState(#tbPRTGAlertAfter)
-          SetGadgetText(#capPRTGAlertAfter,"Уведомлять после " + Str(GetGadgetState(#tbPRTGAlertAfter)*10) + " сек падения")
+          SetGadgetText(#capPRTGAlertAfter,"Уведомлять после " + Str(GetGadgetState(#tbPRTGAlertAfter)*10) + " сек")
         Else
-          SetGadgetText(#capPRTGAlertAfter,"Уведомлять сразу после падения")
+          SetGadgetText(#capPRTGAlertAfter,"Уведомлять сразу")
         EndIf
       Case #btnApply
         If EventType() = #PB_EventType_LeftClick
