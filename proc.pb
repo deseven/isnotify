@@ -134,7 +134,7 @@ Procedure settings(mode.b)
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b
   Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b
-  Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgTime.w,prtgPos.b
+  Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgTime.w,prtgPos.b,prtgRepeatAlert.b,prtgAlertAfter.w
   Protected config.s = GetEnvironmentVariable("APPDATA") + "/" + #myName
   If FileSize(config) <> -2 : CreateDirectory(config) : EndIf
   OpenPreferences(config + "/config.ini",#PB_Preference_GroupSeparator)
@@ -184,6 +184,12 @@ Procedure settings(mode.b)
     prtgPass = encDec(ReadPreferenceString("password",""),#decode)
     prtgTime = ReadPreferenceLong("update_time",30)
     prtgPos = ReadPreferenceLong("notify_position",#wnRB)
+    If ReadPreferenceString("repeat_alert","no") = "yes"
+      prtgRepeatAlert = #True
+    Else
+      prtgRepeatAlert = #False
+    EndIf
+    prtgAlertAfter = ReadPreferenceLong("alert_after",0)
   Else
     If enableDebug
       WritePreferenceString("enable_debug","yes")
@@ -229,6 +235,12 @@ Procedure settings(mode.b)
     WritePreferenceString("password",encDec(prtgPass,#encode))
     WritePreferenceLong("update_time",prtgTime)
     WritePreferenceLong("notify_position",prtgPos)
+    If prtgRepeatAlert
+      WritePreferenceString("repeat_alert","yes")
+    Else
+      WritePreferenceString("repeat_alert","no")
+    EndIf
+    WritePreferenceLong("alert_after",prtgAlertAfter)
   EndIf
   ClosePreferences()
 EndProcedure
@@ -238,7 +250,7 @@ Procedure populateInternal()
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b
   Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b
-  Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgTime.w,prtgPos.b
+  Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgTime.w,prtgPos.b,prtgRepeatAlert.b,prtgAlertAfter.w
   If GetGadgetState(#cbEnableDebug) = #PB_Checkbox_Checked
     enableDebug = #True
   Else
@@ -259,6 +271,7 @@ Procedure populateInternal()
   megaplanLogin = GetGadgetText(#strMegaplanLogin)
   megaplanPass = GetGadgetText(#strMegaplanPass)
   megaplanPos = GetGadgetState(#comMegaplanPos)
+  megaplanTime = GetGadgetState(#tbMegaplanTime)*10
   If GetGadgetState(#cbPortalEnabled) = #PB_Checkbox_Checked
     enablePortal = #True
   Else
@@ -268,6 +281,7 @@ Procedure populateInternal()
   portalLogin = GetGadgetText(#strPortalLogin)
   portalPass = GetGadgetText(#strPortalPass)
   portalPos = GetGadgetState(#comPortalPos)
+  portalTime = GetGadgetState(#tbPortalTime)*10
   If GetGadgetState(#cbPRTGEnabled) = #PB_Checkbox_Checked
     enablePRTG = #True
   Else
@@ -277,6 +291,13 @@ Procedure populateInternal()
   prtgLogin = GetGadgetText(#strPRTGLogin)
   prtgPass = GetGadgetText(#strPRTGPass)
   prtgPos = GetGadgetState(#comPRTGPos)
+  prtgTime = GetGadgetState(#tbPRTGTime)*10
+  prtgAlertAfter = GetGadgetState(#tbPRTGAlertAfter)*10
+  If GetGadgetState(#cbPRTGRepeatAlert) = #PB_Checkbox_Checked
+    prtgRepeatAlert = #True
+  Else
+    prtgRepeatAlert = #False
+  EndIf
 EndProcedure
 
 Procedure populateGUI()
@@ -284,7 +305,7 @@ Procedure populateGUI()
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b
   Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b
-  Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgTime.w,prtgPos.b
+  Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgTime.w,prtgPos.b,prtgRepeatAlert.b,prtgAlertAfter.w
   If enableDebug
     SetGadgetState(#cbEnableDebug,#PB_Checkbox_Checked)
   Else
@@ -316,14 +337,31 @@ Procedure populateGUI()
   SetGadgetText(#strMegaplanLogin,megaplanLogin)
   SetGadgetText(#strMegaplanPass,megaplanPass)
   SetGadgetState(#comMegaplanPos,megaplanPos)
+  SetGadgetState(#tbMegaplanTime,megaplanTime/10)
+  SetGadgetText(#capMegaplanTime,"Обновлять каждые " + Str(megaplanTime) + " сек")
   SetGadgetText(#strPortalURL,portalURL)
   SetGadgetText(#strPortalLogin,portalLogin)
   SetGadgetText(#strPortalPass,portalPass)
   SetGadgetState(#comPortalPos,portalPos)
+  SetGadgetState(#tbPortalTime,portalTime/10)
+  SetGadgetText(#capPortalTime,"Обновлять каждые " + Str(portalTime) + " сек")
   SetGadgetText(#strPRTGURL,prtgURL)
   SetGadgetText(#strPRTGLogin,prtgLogin)
   SetGadgetText(#strPRTGPass,prtgPass)
   SetGadgetState(#comPRTGPos,prtgPos)
+  SetGadgetState(#tbPRTGTime,prtgTime/10)
+  SetGadgetText(#capPRTGTime,"Обновлять каждые " + Str(prtgTime) + " сек")
+  SetGadgetState(#tbPRTGAlertAfter,prtgAlertAfter/10)
+  If prtgAlertAfter
+    SetGadgetText(#capPRTGAlertAfter,"Уведомлять после " + Str(prtgAlertAfter) + " сек падения")
+  Else
+    SetGadgetText(#capPRTGAlertAfter,"Уведомлять сразу после падения")
+  EndIf
+  If prtgRepeatAlert
+    SetGadgetState(#cbPRTGRepeatAlert,#PB_Checkbox_Checked)
+  Else
+    SetGadgetState(#cbPRTGRepeatAlert,#PB_Checkbox_Unchecked)
+  EndIf
 EndProcedure
 
 Procedure checkSettings()
@@ -331,7 +369,7 @@ Procedure checkSettings()
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b
   Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b
-  Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgTime.w,prtgPos.b
+  Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgTime.w,prtgPos.b,prtgRepeatAlert.b,prtgAlertAfter.w
   Shared iconMegaplanConn.i,iconPortalConn.i,iconPRTGConn.i
   If enableMegaplan
     If Not Len(megaplanURL) Or Not Len(megaplanLogin) Or Not Len(megaplanPass)
@@ -369,6 +407,8 @@ Procedure checkSettings()
       ProcedureReturn #False
     EndIf
     If prtgTime < 10 : prtgTime = 10 : EndIf
+    If prtgAlertAfter < 0 : prtgAlertAfter = 0 : EndIf
+    If prtgAlertAfter > 600 : prtgAlertAfter = 600 : EndIf
     If Not IsSysTrayIcon(#trayPRTG)
       AddSysTrayIcon(#trayPRTG,WindowID(#wnd),iconPRTGConn)
       SysTrayIconToolTip(#trayPRTG,"PRTG")
@@ -378,32 +418,24 @@ Procedure checkSettings()
   Else
     If IsSysTrayIcon(#trayPRTG) : RemoveSysTrayIcon(#trayPRTG) : EndIf
   EndIf
-;   Shared myhost.s,mylogin.s,mypass.s,myutime.l,wndHidden.b,state.b,lastCheck.i
-;   If Not (Len(myhost) And Len(mylogin) And Len(mypass) And myutime)
-;     state = #sErr
-;     HideWindow(#wnd,#False,#PB_Window_ScreenCentered) : wndHidden = #False
-;     toLog("do not have enough data to perform checks, setting state to #sErr")
-;   Else
-;     state = #sOk
-;     lastCheck = -myutime*1000
-;     toLog("everything seems to be ok, setting state to #sOk")
-;   EndIf
   ProcedureReturn #True
 EndProcedure
 
 Procedure checkUpdate(n.i)
-  Shared myDir.s
+  Shared myDir.s,selfUpdate.b
   Protected version.s,minutes.i
   Repeat
-    toLog("checking for updates...")
-    version = getData("http://home-nadym.ru/isn/isn.ver")
-    If version <> "-1" And Len(version) And FindString(version,"isn") = 1 And version <> "isn" + #myVer
-      version = RemoveString(version,"isn")
-      toLog("found new version " + version)
-      If message("Обнаружена новая версия, обновиться?",#mQuestion)
-        toLog("starting updater...")
-        RunProgram(myDir + "\isn_upd.exe",version,myDir)
-        Die()
+    If selfUpdate
+      toLog("checking for updates...")
+      version = getData("http://home-nadym.ru/isn/isn.ver")
+      If version <> "-1" And Len(version) And FindString(version,"isn") = 1 And version <> "isn" + #myVer
+        version = RemoveString(version,"isn")
+        toLog("found new version " + version)
+        If message("Обнаружена новая версия, обновиться?",#mQuestion)
+          toLog("starting updater...")
+          RunProgram(myDir + "\isn_upd.exe",version,myDir)
+          Die()
+        EndIf
       EndIf
     EndIf
     Repeat
@@ -415,6 +447,23 @@ Procedure checkUpdate(n.i)
       EndIf
     ForEver
   ForEver
+EndProcedure
+
+Procedure updateTrayTooltip(tray.i,value.i)
+  Select tray.i
+    Case #trayMegaplan
+      If IsSysTrayIcon(#trayMegaplan)
+        SysTrayIconToolTip(#trayMegaplan,"Мегаплан: " + Str(value))
+      EndIf
+    Case #trayPortal
+      If IsSysTrayIcon(#trayPortal)
+        SysTrayIconToolTip(#trayPortal,"Portal: " + Str(value))
+      EndIf
+    Case #trayPRTG
+      If IsSysTrayIcon(#trayPRTG)
+        SysTrayIconToolTip(#trayPRTG,"PRTG: " + Str(value))
+      EndIf
+  EndSelect
 EndProcedure
 
 Procedure cleanUp()

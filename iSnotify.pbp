@@ -7,20 +7,20 @@
   <section name="data">
     <explorer view="S:\misc\work\ntest3\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2015-08-16 00:43" user="deseven" host="DE7PC"/>
+    <lastopen date="2015-08-18 15:48" user="deseven" host="DE7PC"/>
   </section>
   <section name="files">
     <file name="const.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="b92d9ae7f55cf37a00270fc71c0e2a92"/>
+      <fingerprint md5="919245691ab6205f8c18a85ffc68b79f"/>
     </file>
     <file name="installer.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="9d3da9f0b885d07e533ed884766c9766"/>
+      <fingerprint md5="4e7b477c7dc0389b7e2b706491463ead"/>
     </file>
     <file name="main.pb">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="97f2132a5a4511901fe56e045430d575"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="0" panelstate="+"/>
+      <fingerprint md5="609fa3832641bb6fff30435127de3fd3"/>
     </file>
     <file name="mod\megaplan.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
@@ -32,26 +32,26 @@
     </file>
     <file name="mod\prtg.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="3047a1b05407bc8ba4ad9c28f49cbdf7"/>
+      <fingerprint md5="5c5aebb87b1c78166d91f86cdd89082a"/>
     </file>
     <file name="proc.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="424c17d4c08b4bba0f218d7ed7851977"/>
+      <fingerprint md5="387ddb08a0fd712e9b320e573fad4608"/>
     </file>
     <file name="updater.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="de9e2650859cd87da2ce96f4b6a02937"/>
+      <fingerprint md5="9248c83209e47ee92c1eb1a243fde900"/>
     </file>
   </section>
   <section name="targets">
-    <target name="isn" enabled="1" default="0">
+    <target name="isn" enabled="1" default="1">
       <inputfile value="main.pb"/>
       <outputfile value="build\isn.exe"/>
       <executable value="build\isn.exe"/>
       <options unicode="1" thread="1" xpskin="1" debug="1"/>
       <temporaryexe value="source"/>
       <icon enable="1">res\main.ico</icon>
-      <buildcount enable="1" value="14"/>
+      <buildcount enable="1" value="16"/>
     </target>
     <target name="isn_upd" enabled="1" default="0">
       <inputfile value="updater.pb"/>
@@ -60,16 +60,16 @@
       <executable value="build\isn_upd.exe"/>
       <options unicode="1" thread="1" xpskin="1" debug="1"/>
       <temporaryexe value="source"/>
-      <buildcount enable="1" value="14"/>
+      <buildcount enable="1" value="16"/>
     </target>
-    <target name="isn_install" enabled="1" default="1">
+    <target name="isn_install" enabled="1" default="0">
       <inputfile value="installer.pb"/>
       <outputfile value="build\isn_install.exe"/>
       <executable value="build\isn_install.exe"/>
       <options unicode="1" thread="1" xpskin="1" admin="1" debug="1"/>
       <temporaryexe value="source"/>
       <icon enable="1">res\main.ico</icon>
-      <buildcount enable="1" value="14"/>
+      <buildcount enable="1" value="16"/>
     </target>
   </section>
 </project>

@@ -15,10 +15,10 @@ Procedure prtgTry(n.i)
 EndProcedure
 
 Procedure prtgCheck(time.i)
-  Shared prtgURL.s,prtgLogin.s,prtgKey.s,prtgAlerts.i
+  Shared prtgURL.s,prtgLogin.s,prtgKey.s,prtgAlerts.i,prtgRepeatAlert.b,prtgAlertAfter.w
   Protected dataURL.s,res.s,curAlerts.i,msg.s,oldmsg.s,alerts.PRTGalerts,prev.s
   Protected NewList devices.s()
-  dataURL = "http://" + prtgURL + "/api/table.json?content=sensors&output=json&columns=sensor,device&filter_status=5&username=" + prtgLogin + "&passhash=" + prtgKey
+  dataURL = "http://" + prtgURL + "/api/table.json?content=sensors&output=json&columns=sensor,device,downtimesince&filter_status=5&username=" + prtgLogin + "&passhash=" + prtgKey
   Repeat
     toLog("getting data from PRTG...")
     res = getData(dataURL)
@@ -32,8 +32,13 @@ Procedure prtgCheck(time.i)
       ExtractJSONStructure(JSONValue(0),@alerts.PRTGalerts,PRTGalerts)
       curAlerts = alerts\treesize
       ForEach alerts\sensors()
-        AddElement(devices())
-        devices() = alerts\sensors()\device
+        If prtgAlertAfter And alerts\sensors()\downtimesince_raw < prtgAlertAfter
+          curAlerts - 1
+          toLog("removing fresh alert (" + Str(alerts\sensors()\downtimesince_raw) + " < " + Str(prtgAlertAfter) + ")")
+        Else
+          AddElement(devices())
+          devices() = alerts\sensors()\device
+        EndIf
       Next
       SortList(devices(),#PB_Sort_Ascending)
       ForEach devices()
@@ -47,7 +52,7 @@ Procedure prtgCheck(time.i)
         msg + devices() + ", "
       Next
       msg = Left(msg,Len(msg)-2)
-      If msg <> oldmsg And curAlerts > 0
+      If (prtgRepeatAlert Or msg <> oldmsg) And curAlerts > 0
         oldmsg = msg
         PostEvent(#prtgEvent,#wnd,0,#prtgMsg,@msg)
       Else

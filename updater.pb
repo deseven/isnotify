@@ -80,13 +80,15 @@ Procedure doUpdate(n.i)
   ClosePack(0)
   DeleteFile("distr.dat",#PB_FileSystem_Force)
   PostEvent(#unpacked)
-  If ReceiveHTTPFile(changesURL,"changes.txt")
-    ReadFile(0,"changes.txt",#PB_File_NoBuffering)
-    While Not Eof(0)
-      changes + ReadString(0) + #CRLF$
-    Wend
-    CloseFile(0)
-    DeleteFile("changes.txt",#PB_FileSystem_Force)
+  If ProgramParameter(0) <> "release"
+    If ReceiveHTTPFile(changesURL,"changes.txt")
+      ReadFile(0,"changes.txt",#PB_File_NoBuffering)
+      While Not Eof(0)
+        changes + ReadString(0) + #CRLF$
+      Wend
+      CloseFile(0)
+      DeleteFile("changes.txt",#PB_FileSystem_Force)
+    EndIf
   EndIf
   PostEvent(#finished)
 EndProcedure

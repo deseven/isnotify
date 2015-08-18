@@ -1,9 +1,9 @@
 ﻿#myName = "iSnotify"
-#myVer = "0.4.1"
+#myVer = "0.5.0"
 #aboutstr = #myName+" "+#myVer+#CRLF$+"written by deseven, 2015"+#CRLF$+#CRLF$+"web: deseven.info"+#CRLF$+"mail: de7@deseven.info"
 #myDefUtime = 10
 #trayUpdate = 500
-#checkUpdateTime = 30
+#checkUpdateTime = 120
 #curlTimeout = 30
 
 #portalBgColor = $c9a380
@@ -58,6 +58,15 @@ Enumeration main
   #strPRTGPass
   #capPRTGPos
   #comPRTGPos
+  #capMegaplanTime
+  #tbMegaplanTime
+  #capPortalTime
+  #tbPortalTime
+  #capPRTGTime
+  #tbPRTGTime
+  #cbPRTGRepeatAlert
+  #capPRTGAlertAfter
+  #tbPRTGAlertAfter
 EndEnumeration
 
 Enumeration tabs
@@ -137,6 +146,8 @@ EndEnumeration
 Structure PRTGalertSensor
   sensor.s
   device.s
+  downtimesince.s
+  downtimesince_raw.i
 EndStructure
 
 Structure PRTGalerts
