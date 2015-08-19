@@ -146,32 +146,31 @@ Procedure megaplanCheck(time.i)
       resData = ReplaceString(resData,#DQUOTE$ + "Content" + #DQUOTE$ + ":{" + #DQUOTE$,#DQUOTE$ + "ContentComment" + #DQUOTE$ + ":{" + #DQUOTE$)
       Debug resData
       If ParseJSON(1,resData,#PB_JSON_NoCase)
-        If ExtractJSONStructure(JSONValue(1),@queryRes.megaplanQuery,megaplanQuery)
-          megaplanAlerts = ListSize(queryRes\mdata\notifications())
-          ClearList(megaplanMessages())
-          ForEach queryRes\mdata\notifications()
-            If megaplanRepeatAlert Or queryRes\mdata\notifications()\Id > megaplanLastMsg
-              AddElement(megaplanMessages())
-              megaplanMessages()\title = queryRes\mdata\notifications()\Name
-              If Len(queryRes\mdata\notifications()\ContentComment\Subject\Name)
-                megaplanMessages()\message = "Задача " + #DQUOTE$ + queryRes\mdata\notifications()\ContentComment\Subject\Name + #DQUOTE$ + ", " + queryRes\mdata\notifications()\ContentComment\Author\Name + ":" + #CRLF$ + queryRes\mdata\notifications()\ContentComment\Text
-              Else
-                megaplanMessages()\message = queryRes\mdata\notifications()\Content
-              EndIf
+        ExtractJSONStructure(JSONValue(1),@queryRes.megaplanQuery,megaplanQuery)
+        megaplanAlerts = ListSize(queryRes\mdata\notifications())
+        ClearList(megaplanMessages())
+        ForEach queryRes\mdata\notifications()
+          If megaplanRepeatAlert Or queryRes\mdata\notifications()\Id > megaplanLastMsg
+            AddElement(megaplanMessages())
+            megaplanMessages()\title = queryRes\mdata\notifications()\Name
+            If Len(queryRes\mdata\notifications()\ContentComment\Subject\Name)
+              megaplanMessages()\message = "Задача " + #DQUOTE$ + queryRes\mdata\notifications()\ContentComment\Subject\Name + #DQUOTE$ + ", " + queryRes\mdata\notifications()\ContentComment\Author\Name + ":" + #CRLF$ + queryRes\mdata\notifications()\ContentComment\Text
+            Else
+              megaplanMessages()\message = queryRes\mdata\notifications()\Content
             EndIf
-          Next
-          ForEach queryRes\mdata\notifications()
-            If queryRes\mdata\notifications()\Id > megaplanLastMsg
-              megaplanLastMsg = queryRes\mdata\notifications()\Id
-            EndIf
-          Next
-          FreeJSON(1)
-          FreeStructure(@queryRes)
-          If megaplanAlerts > 0
-            PostEvent(#megaplanEvent,#wnd,0,#megaplanMsg)
-          Else
-            PostEvent(#megaplanEvent,#wnd,0,#megaplanNomsg)
           EndIf
+        Next
+        ForEach queryRes\mdata\notifications()
+          If queryRes\mdata\notifications()\Id > megaplanLastMsg
+            megaplanLastMsg = queryRes\mdata\notifications()\Id
+          EndIf
+        Next
+        FreeJSON(1)
+        If ListSize(queryRes\mdata\notifications()) : ClearList(queryRes\mdata\notifications()) : EndIf
+        If megaplanAlerts > 0
+          PostEvent(#megaplanEvent,#wnd,0,#megaplanMsg)
+        Else
+          PostEvent(#megaplanEvent,#wnd,0,#megaplanNomsg)
         EndIf
       Else
         PostEvent(#megaplanEvent,#wnd,0,#megaplanFailed)
