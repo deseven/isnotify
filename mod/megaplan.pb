@@ -114,13 +114,14 @@ EndProcedure
 
 Procedure megaplanCheck(time.i)
   Shared megaplanURL.s,megaplanLogin.s,megaplanKey.s,megaplanAccess.s,megaplanAlerts.i,megaplanLastMsg.i,megaplanRepeatAlert.b
-  Protected query.s,resData.s,resHTTP.w,queryRes.megaplanQuery,curAlerts.i
+  Protected query.s,resData.s,resHTTP.w,queryRes.megaplanQuery,curAlerts.i,tz.s
   Shared megaplanMessages.megaplanMessage()
   Protected *resData
   Repeat
-    toLog("getting data from Megaplan...")
+    tz = getTimezone()
+    toLog("getting data from Megaplan [" + tz + "]...")
     query = "/BumsCommonApiV01/Informer/notifications.api?Group=1"
-    *resData = mega_query(str2ansi(megaplanAccess),str2ansi(megaplanKey),str2ansi(query),str2ansi(megaplanURL),str2ansi("+0200"))
+    *resData = mega_query(str2ansi(megaplanAccess),str2ansi(megaplanKey),str2ansi(query),str2ansi(megaplanURL),str2ansi(tz))
     If *resData
       resData = PeekS(*resData,-1,#PB_UTF8)
       If Not Len(resData)
@@ -145,31 +146,32 @@ Procedure megaplanCheck(time.i)
       resData = ReplaceString(resData,#DQUOTE$ + "Content" + #DQUOTE$ + ":{" + #DQUOTE$,#DQUOTE$ + "ContentComment" + #DQUOTE$ + ":{" + #DQUOTE$)
       Debug resData
       If ParseJSON(1,resData,#PB_JSON_NoCase)
-        ExtractJSONStructure(JSONValue(1),@queryRes.megaplanQuery,megaplanQuery)
-        megaplanAlerts = ListSize(queryRes\mdata\notifications())
-        ClearList(megaplanMessages())
-        ForEach queryRes\mdata\notifications()
-          If megaplanRepeatAlert Or queryRes\mdata\notifications()\Id > megaplanLastMsg
-            AddElement(megaplanMessages())
-            megaplanMessages()\title = queryRes\mdata\notifications()\Name
-            If Len(queryRes\mdata\notifications()\ContentComment\Subject\Name)
-              megaplanMessages()\message = "Задача " + #DQUOTE$ + queryRes\mdata\notifications()\ContentComment\Subject\Name + #DQUOTE$ + ", " + queryRes\mdata\notifications()\ContentComment\Author\Name + ":" + #CRLF$ + queryRes\mdata\notifications()\ContentComment\Text
-            Else
-              megaplanMessages()\message = queryRes\mdata\notifications()\Content
+        If ExtractJSONStructure(JSONValue(1),@queryRes.megaplanQuery,megaplanQuery)
+          megaplanAlerts = ListSize(queryRes\mdata\notifications())
+          ClearList(megaplanMessages())
+          ForEach queryRes\mdata\notifications()
+            If megaplanRepeatAlert Or queryRes\mdata\notifications()\Id > megaplanLastMsg
+              AddElement(megaplanMessages())
+              megaplanMessages()\title = queryRes\mdata\notifications()\Name
+              If Len(queryRes\mdata\notifications()\ContentComment\Subject\Name)
+                megaplanMessages()\message = "Задача " + #DQUOTE$ + queryRes\mdata\notifications()\ContentComment\Subject\Name + #DQUOTE$ + ", " + queryRes\mdata\notifications()\ContentComment\Author\Name + ":" + #CRLF$ + queryRes\mdata\notifications()\ContentComment\Text
+              Else
+                megaplanMessages()\message = queryRes\mdata\notifications()\Content
+              EndIf
             EndIf
+          Next
+          ForEach queryRes\mdata\notifications()
+            If queryRes\mdata\notifications()\Id > megaplanLastMsg
+              megaplanLastMsg = queryRes\mdata\notifications()\Id
+            EndIf
+          Next
+          FreeJSON(1)
+          FreeStructure(@queryRes)
+          If megaplanAlerts > 0
+            PostEvent(#megaplanEvent,#wnd,0,#megaplanMsg)
+          Else
+            PostEvent(#megaplanEvent,#wnd,0,#megaplanNomsg)
           EndIf
-        Next
-        ForEach queryRes\mdata\notifications()
-          If queryRes\mdata\notifications()\Id > megaplanLastMsg
-            megaplanLastMsg = queryRes\mdata\notifications()\Id
-          EndIf
-        Next
-        FreeJSON(1)
-        FreeStructure(@queryRes)
-        If megaplanAlerts > 0
-          PostEvent(#megaplanEvent,#wnd,0,#megaplanMsg)
-        Else
-          PostEvent(#megaplanEvent,#wnd,0,#megaplanNomsg)
         EndIf
       Else
         PostEvent(#megaplanEvent,#wnd,0,#megaplanFailed)

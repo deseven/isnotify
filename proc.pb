@@ -97,6 +97,23 @@ Procedure Die()
   End 0
 EndProcedure
 
+Procedure.s getTimezone()
+  Protected timezone.TIME_ZONE_INFORMATION,tzdelta.i
+  GetTimeZoneInformation_(@timezone)
+  tzdelta = (timezone\DaylightBias + timezone\Bias)/60
+  If tzdelta = 0
+    ProcedureReturn "+0000"
+  ElseIf tzdelta > 0 And tzdelta < 10
+    ProcedureReturn "-0" + Str(tzdelta) + "00"
+  ElseIf tzdelta >= 10
+    ProcedureReturn "-" + Str(tzdelta) + "00"
+  ElseIf tzdelta < 0 And tzdelta > -10
+    ProcedureReturn "+0" + Str(tzdelta*-1) + "00"
+  Else
+    ProcedureReturn "+" + Str(tzdelta*-1) + "00"
+  EndIf
+EndProcedure
+
 Procedure.s encDec(string.s,mode.b)
   If Len(string)
     Protected res.s = Space(1024)
