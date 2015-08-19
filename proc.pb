@@ -41,11 +41,15 @@ Procedure getRes()
 EndProcedure
 
 Procedure.s str2ansi(string.s)
-  Static *curlstring 
+  Protected *curlstring 
   If *curlstring : FreeMemory(*curlstring) : EndIf
   *curlstring = AllocateMemory(Len(string) + 1)
   PokeS(*curlstring,string,-1,#PB_Ascii)
   ProcedureReturn PeekS(*curlstring,-1)
+EndProcedure
+
+Procedure.s MD5AsciiFingerprint(s.s)
+  Protected a.s=s:ProcedureReturn MD5Fingerprint(@a,PokeS(@a,s,-1,#PB_Ascii))  
 EndProcedure
 
 Procedure message(message.s,type.b = #mInfo)
@@ -108,12 +112,14 @@ Procedure.s encDec(string.s,mode.b)
 EndProcedure
 
 Procedure.s getData(url.s)
-  Protected res.b,resData.s,curl.i
+  Protected res.b,resData.s,curl.i,agent.s
   curl = curl_easy_init()
   url = str2ansi(url)
+  agent = str2ansi(#myName + "/" + #myVer)
   If curl
     curl_easy_setopt(curl,#CURLOPT_URL,@url)
     curl_easy_setopt(curl,#CURLOPT_IPRESOLVE,#CURL_IPRESOLVE_V4)
+    curl_easy_setopt(curl,#CURLOPT_USERAGENT,@agent)
     curl_easy_setopt(curl,#CURLOPT_TIMEOUT,#curlTimeout)
     curl_easy_setopt(curl,#CURLOPT_WRITEFUNCTION,@RW_LibCurl_WriteFunction())
     res.b = curl_easy_perform(curl)

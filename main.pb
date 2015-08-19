@@ -26,11 +26,12 @@ Define iconMegaplanOk.i,iconMegaplanConn.i,iconMegaplanAlert.i
 Define iconPortalOk.i,iconPortalConn.i,iconPortalAlert.i
 Define iconPRTGOk.i,iconPRTGConn.i,iconPRTGAlert.i
 Define iconNotifyMegaplan.i,iconNotifyPortal.i,iconNotifyPRTG.i
-Define *megaplanMsg,*portalMsg,*prtgMsg
+Define *portalMsg,*prtgMsg
+Define NewList megaplanMessages.megaplanMessage()
 Define currentOpenAction.s
 Define megaplanTryThread.i,portalTryThread.i,prtgTryThread.i
 Define megaplanCheckThread.i,portalCheckThread.i,prtgCheckThread.i
-Define megaplanKey.s,megaplanOpenAction.s,megaplanAlerts.i
+Define megaplanKey.s,megaplanAccess.s,megaplanOpenAction.s,megaplanAlerts.i,megaplanLastMsg.i
 Define portalOpenAction.s,portalAlerts.i
 Define prtgKey.s,prtgOpenAction.s,prtgAlerts.i
 Define megaplanIcon.i,portalIcon.i,prtgIcon.i
@@ -173,7 +174,7 @@ If Not (enableMegaplan Or enablePortal Or enablePRTG)
 EndIf
 
 ; for debuging purposes
-HideWindow(#wnd,#False)
+;HideWindow(#wnd,#False)
 
 Repeat
   ev = WaitWindowEvent(50)
@@ -241,6 +242,15 @@ Repeat
           megaplanState = #megaplanOk
           ChangeSysTrayIcon(#trayMegaplan,iconMegaplanOk)
           megaplanIcon = iconMegaplanOk
+          megaplanCheckThread = CreateThread(@megaplanCheck(),megaplanTime)
+        Case #megaplanMsg
+          toLog("megaplan alerts: " + Str(megaplanAlerts))
+          updateTrayTooltip(#trayMegaplan,megaplanAlerts)
+          ForEach megaplanMessages()
+            wnNotify(megaplanMessages()\title,megaplanMessages()\message,megaplanPos,notifyTimeout,#megaplanBgColor,0,FontID(#fTitle),FontID(#fText),iconNotifyMegaplan)
+          Next
+        Case #megaplanNomsg
+          updateTrayTooltip(#trayMegaplan,megaplanAlerts)
       EndSelect
     EndIf
   EndIf

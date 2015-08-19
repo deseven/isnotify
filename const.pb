@@ -1,5 +1,5 @@
 ﻿#myName = "iSnotify"
-#myVer = "0.5.1"
+#myVer = "0.6.0"
 #aboutstr = #myName+" "+#myVer+#CRLF$+"written by deseven, 2015"+#CRLF$+#CRLF$+"web: deseven.info"+#CRLF$+"mail: de7@deseven.info"
 #myDefUtime = 10
 #trayUpdate = 500
@@ -145,17 +145,9 @@ Enumeration events #PB_Event_FirstCustomValue
   #prtgEvent
 EndEnumeration
 
-Structure PRTGalertSensor
-  sensor.s
-  device.s
-  downtimesince.s
-  downtimesince_raw.i
-EndStructure
-
-Structure PRTGalerts
-  ver.s
-  treesize.l
-  List sensors.PRTGalertSensor()
+Structure megaplanMessage
+  title.s
+  message.s
 EndStructure
 
 DataSection

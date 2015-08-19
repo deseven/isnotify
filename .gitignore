@@ -3,3 +3,5 @@
 *.zip
 *.log
 Thumbs.db
+libmegaplan.exp
+libmegaplan.lib

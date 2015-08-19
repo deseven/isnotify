@@ -1,9 +1,21 @@
-﻿
+﻿Structure PRTGalertSensor
+  sensor.s
+  device.s
+  downtimesince.s
+  downtimesince_raw.i
+EndStructure
+
+Structure PRTGalerts
+  ver.s
+  treesize.l
+  List sensors.PRTGalertSensor()
+EndStructure
+
 Procedure prtgTry(n.i)
   Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgKey.s,prtgOpenAction.s
   prtgOpenAction = "http://" + prtgURL + "/alarms.htm?filter_status=5&filter_status=4&filter_status=10&filter_status=13&filter_status=14"
-  Protected res.s = getData("http://" + prtgURL + "/api/getpasshash.htm?username=" + prtgLogin + "&password=" + prtgPass)
   Delay(500)
+  Protected res.s = getData("http://" + prtgURL + "/api/getpasshash.htm?username=" + prtgLogin + "&password=" + prtgPass)
   If FindString(res,"Unauthorized")
     PostEvent(#prtgEvent,#wnd,0,#prtgFailedLogin)
   ElseIf res = "-1"
@@ -27,6 +39,9 @@ Procedure prtgCheck(time.i)
     curAlerts = 0
     If FindString(res,"Unauthorized")
       PostEvent(#prtgEvent,#wnd,0,#prtgFailedLogin)
+      ProcedureReturn
+    ElseIf Not Len(res) Or res = "-1"
+      PostEvent(#prtgEvent,#wnd,0,#prtgFailed)
       ProcedureReturn
     ElseIf ParseJSON(0,res,#PB_JSON_NoCase)
       ExtractJSONStructure(JSONValue(0),@alerts.PRTGalerts,PRTGalerts)
