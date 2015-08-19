@@ -99,8 +99,11 @@ EndProcedure
 
 Procedure.s getTimezone()
   Protected timezone.TIME_ZONE_INFORMATION,tzdelta.i
-  GetTimeZoneInformation_(@timezone)
-  tzdelta = (timezone\DaylightBias + timezone\Bias)/60
+  If GetTimeZoneInformation_(@timezone) = #TIME_ZONE_ID_DAYLIGHT
+    tzdelta = (timezone\DaylightBias + timezone\Bias)/60
+  Else
+    tzdelta = timezone\Bias/60
+  EndIf
   If tzdelta = 0
     ProcedureReturn "+0000"
   ElseIf tzdelta > 0 And tzdelta < 10
