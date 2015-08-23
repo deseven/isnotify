@@ -25,8 +25,8 @@ Procedure.s hmac_sha1(SecretAccessKey.s,StringToSign.s)
   opad.s = LSet(opad, 64, Chr($5C))
   *ipadt = AllocateMemory(64 + Len(StringToSign))
   *opadt = AllocateMemory(64 + 20)
-  PokeS(*ipadt,ipad, 64)
-  PokeS(*opadt,opad, 64)
+  PokeS(*ipadt,ipad,64)
+  PokeS(*opadt,opad,64)
 
   For x = 1 To 64
     PokeB(*opadt + x - 1, Asc(Mid(opad, x, 1)) ! Asc(Mid(SecretAccessKey, x, 1)))
@@ -46,7 +46,7 @@ Procedure.s hmac_sha1(SecretAccessKey.s,StringToSign.s)
   Debug two
   Base64Encoder(@two,StringByteLength(two),@out,StringByteLength(out))
   
-  FreeMemory(*ipadt) : FreeMemory(*opadt)
+  ;FreeMemory(*ipadt) : FreeMemory(*opadt)
   
   ProcedureReturn out.s
 EndProcedure
@@ -200,9 +200,8 @@ ProcedureDLL.s mega_query(access_id.s,secret_key.s,query.s,base_url.s,timezone.s
     signature = "GET" + #LF$ + #LF$ + #LF$ + GetTimestamp(now,timezone) + #LF$ + base_url + query
     ;secret_key = PeekS(str2curl(secret_key),-1,#PB_Ascii)
     ;signature = PeekS(str2curl(signature),-1,#PB_Ascii)
-    Debug signature
+    ;Debug signature
     signature = hmac_sha1(secret_key,signature)
-    
     url = "https://" + base_url + query
     curl_easy_setopt(curl,#CURLOPT_URL,@url)
     curl_easy_setopt(curl,#CURLOPT_USERAGENT,@agent)

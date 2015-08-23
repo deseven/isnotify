@@ -17,6 +17,19 @@ Procedure runLock()
   ProcedureReturn #True
 EndProcedure
 
+Procedure.b isFullscreenActive()
+  Protected fwnd.i,desktops.b,rc.RECT
+  fwnd = GetForegroundWindow_()
+  If fwnd <> GetDesktopWindow_() And fwnd <> GetShellWindow_()
+    GetWindowRect_(fwnd,@rc)
+    ExamineDesktops()
+    If rc\left = 0 And rc\top = 0 And rc\right = DesktopWidth(0) And rc\bottom = DesktopHeight(0)
+      ProcedureReturn #True
+    EndIf
+  EndIf
+  ProcedureReturn #False
+EndProcedure
+
 Procedure getRes()
   Shared iconMegaplanOk.i,iconMegaplanConn.i,iconMegaplanAlert.i
   Shared iconPortalOk.i,iconPortalConn.i,iconPortalAlert.i
@@ -156,7 +169,7 @@ Procedure.s getData(url.s)
 EndProcedure
 
 Procedure settings(mode.b)
-  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w
+  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
   Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
@@ -175,6 +188,11 @@ Procedure settings(mode.b)
       selfUpdate = #True
     Else
       selfUpdate = #False
+    EndIf
+    If ReadPreferenceString("disable_fullscreen_notify","no") = "yes"
+      noFullscreenNotify = #True
+    Else
+      noFullscreenNotify = #False
     EndIf
     notifyTimeout = ReadPreferenceLong("notification_timeout",4000)
     If ReadPreferenceString("enable_megaplan","no") = "yes"
@@ -237,6 +255,11 @@ Procedure settings(mode.b)
     Else
       WritePreferenceString("self_update","no")
     EndIf
+    If noFullscreenNotify
+      WritePreferenceString("disable_fullscreen_notify","yes")
+    Else
+      WritePreferenceString("disable_fullscreen_notify","no")
+    EndIf
     WritePreferenceLong("notification_timeout",notifyTimeout)
     If enableMegaplan
       WritePreferenceString("enable_megaplan","yes")
@@ -292,7 +315,7 @@ Procedure settings(mode.b)
 EndProcedure
 
 Procedure populateInternal()
-  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w
+  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
   Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
@@ -306,6 +329,11 @@ Procedure populateInternal()
     selfUpdate = #True
   Else
     selfUpdate = #False
+  EndIf
+  If GetGadgetState(#cbNoFullscreenNotify) = #PB_Checkbox_Checked
+    noFullscreenNotify = #True
+  Else
+    noFullscreenNotify = #False
   EndIf
   notifyTimeout = GetGadgetState(#tbNotifyTimeout)*100
   If GetGadgetState(#cbMegaplanEnabled) = #PB_Checkbox_Checked
@@ -357,7 +385,7 @@ Procedure populateInternal()
 EndProcedure
 
 Procedure populateGUI()
-  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w
+  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
   Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
@@ -371,6 +399,11 @@ Procedure populateGUI()
     SetGadgetState(#cbEnableSelfUpdate,#PB_Checkbox_Checked)
   Else
     SetGadgetState(#cbEnableSelfUpdate,#PB_Checkbox_Unchecked)
+  EndIf
+  If noFullscreenNotify
+    SetGadgetState(#cbNoFullscreenNotify,#PB_Checkbox_Checked)
+  Else
+    SetGadgetState(#cbNoFullscreenNotify,#PB_Checkbox_Unchecked)
   EndIf
   SetGadgetState(#tbNotifyTimeout,notifyTimeout/100)
   SetGadgetText(#capNotifyTimeout,"Показывать уведомления " + Str(notifyTimeout) + " мс")
@@ -488,7 +521,7 @@ Procedure checkSettings()
 EndProcedure
 
 Procedure checkUpdate(n.i)
-  Shared myDir.s,selfUpdate.b
+  Shared myDir.s,selfUpdate.b,noFullscreenNotify.b
   Protected version.s,minutes.i
   Repeat
     If selfUpdate
@@ -497,7 +530,9 @@ Procedure checkUpdate(n.i)
       If version <> "-1" And Len(version) And FindString(version,"isn") = 1 And version <> "isn" + #myVer
         version = RemoveString(version,"isn")
         toLog("found new version " + version)
-        If message("Обнаружена новая версия, обновиться?",#mQuestion)
+        If noFullscreenNotify And isFullscreenActive()
+          toLog("supressing update request because of the fullscreen app",#lWarn)
+        ElseIf message("Обнаружена новая версия, обновиться?",#mQuestion)
           toLog("starting updater...")
           RunProgram(myDir + "\isn_upd.exe",version,myDir)
           Die()
@@ -539,7 +574,7 @@ Procedure cleanUp()
   Shared megaplanState.i,portalState.i,prtgState.i
   Shared megaplanIcon.i,portalIcon.i,prtgIcon.i
   Shared iconMegaplanConn.i,iconPortalConn.i,iconPRTGConn.i
-  Shared megaplanAlerts.i,portalAlerts.i,prtgAlerts.i
+  Shared megaplanAlerts.i,portalAlerts.i,prtgAlerts.i,megaplanLastMsg.i
   If IsThread(megaplanTryThread) : KillThread(megaplanTryThread) : EndIf
   If IsThread(portalTryThread) : KillThread(portalTryThread) : EndIf
   If IsThread(prtgTryThread) : KillThread(prtgTryThread) : EndIf
@@ -557,6 +592,7 @@ Procedure cleanUp()
   megaplanAlerts = 0
   portalAlerts = 0
   prtgAlerts = 0
+  megaplanLastMsg = 0
 EndProcedure
 
 ; IDE Options = PureBasic 5.31 (Windows - x86)

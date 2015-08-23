@@ -1,32 +1,32 @@
 ﻿Structure megaplanContentAuthor
-  Id.i
-  Name.s
+  id.i
+  name.s
 EndStructure
 
 Structure megaplanContentSubject
-  Id.i
-  Name.s
-  Type.s
+  id.i
+  name.s
+  type.s
 EndStructure
 
 Structure megaplanContent
-  Subject.megaplanContentSubject
-  Text.s
-  Author.megaplanContentAuthor
+  subject.megaplanContentSubject
+  text.s
+  author.megaplanContentAuthor
 EndStructure
 
 Structure megaplanSubject
-  Id.i
-  Type.s
+  id.i
+  type.s
 EndStructure
 
 Structure megaplanNotification
-  Id.i
-  Subject.megaplanSubject
-  Content.s
-  ContentComment.megaplanContent
-  TimeCreated.s
-  Name.s
+  id.i
+  subject.megaplanSubject
+  content.s
+  contentComment.megaplanContent
+  timeCreated.s
+  name.s
 EndStructure
 
 Structure megaplanNotifications
@@ -41,6 +41,36 @@ EndStructure
 Structure megaplanQuery
   Map status.s()
   mdata.megaplanNotifications
+EndStructure
+
+Structure megaplanTask
+  id.i
+  Name.s
+  Status.s
+  Deadline.s
+  Owner.s
+  responsible.s
+  favorite.s
+  timeCreated.s
+  message.s
+EndStructure
+
+Structure megaplanProject
+  id.i
+  Name.s
+  Status.s
+  Deadline.s
+  Owner.s
+EndStructure
+
+Structure megaplanApprovals
+  List tasks.megaplanTask()
+  List projects.megaplanTask()
+EndStructure
+
+Structure megaplanQueryApp
+  Map status.s()
+  mdata.megaplanApprovals
 EndStructure
 
 Import "..\lib\libmegaplan.lib"
@@ -114,13 +144,13 @@ EndProcedure
 
 Procedure megaplanCheck(time.i)
   Shared megaplanURL.s,megaplanLogin.s,megaplanKey.s,megaplanAccess.s,megaplanAlerts.i,megaplanLastMsg.i,megaplanRepeatAlert.b
-  Protected query.s,resData.s,resHTTP.w,queryRes.megaplanQuery,curAlerts.i,tz.s
+  Protected query.s,resData.s,resHTTP.w,queryRes.megaplanQuery,queryAppRes.megaplanQueryApp,curAlerts.i,tz.s
   Shared megaplanMessages.megaplanMessage()
   Protected *resData
   Repeat
     tz = getTimezone()
     toLog("getting data from Megaplan [" + tz + "]...")
-    query = "/BumsCommonApiV01/Informer/notifications.api?Group=1"
+    query = "/BumsCommonApiV01/Informer/notifications.api"
     *resData = mega_query(str2ansi(megaplanAccess),str2ansi(megaplanKey),str2ansi(query),str2ansi(megaplanURL),str2ansi(tz))
     If *resData
       resData = PeekS(*resData,-1,#PB_UTF8)
@@ -138,13 +168,15 @@ Procedure megaplanCheck(time.i)
       PostEvent(#megaplanEvent,#wnd,0,#megaplanFailed)
       ProcedureReturn
     ElseIf resData = "0"
-      PostEvent(#megaplanEvent,#wnd,0,#megaplanFailed)
+      PostEvent(#megaplanEvent,#wnd,0,#megaplanFailedLogin)
       ProcedureReturn
     Else
       resData = ReplaceString(resData,#DQUOTE$ + "data" + #DQUOTE$ + ":{",#DQUOTE$ + "mdata" + #DQUOTE$ + ":{")
       resData = uEscapedToString(resData)
       resData = ReplaceString(resData,#DQUOTE$ + "Content" + #DQUOTE$ + ":{" + #DQUOTE$,#DQUOTE$ + "ContentComment" + #DQUOTE$ + ":{" + #DQUOTE$)
-      Debug resData
+      resData = ReplaceString(resData,#CR$,"")
+      resData = ReplaceString(resData,#LF$,"")
+      toLog("Megaplan data: " + resData)
       If ParseJSON(1,resData,#PB_JSON_NoCase)
         ExtractJSONStructure(JSONValue(1),@queryRes.megaplanQuery,megaplanQuery)
         megaplanAlerts = ListSize(queryRes\mdata\notifications())
@@ -152,12 +184,14 @@ Procedure megaplanCheck(time.i)
         ForEach queryRes\mdata\notifications()
           If megaplanRepeatAlert Or queryRes\mdata\notifications()\Id > megaplanLastMsg
             AddElement(megaplanMessages())
-            megaplanMessages()\title = queryRes\mdata\notifications()\Name
+            megaplanMessages()\title = queryRes\mdata\notifications()\name
+            megaplanMessages()\title = ReplaceString(megaplanMessages()\title,"&quot;",#DQUOTE$)
             If Len(queryRes\mdata\notifications()\ContentComment\Subject\Name)
               megaplanMessages()\message = "Задача " + #DQUOTE$ + queryRes\mdata\notifications()\ContentComment\Subject\Name + #DQUOTE$ + ", " + queryRes\mdata\notifications()\ContentComment\Author\Name + ":" + #CRLF$ + queryRes\mdata\notifications()\ContentComment\Text
             Else
               megaplanMessages()\message = queryRes\mdata\notifications()\Content
             EndIf
+            megaplanMessages()\message = ReplaceString(megaplanMessages()\message,"&quot;",#DQUOTE$)
           EndIf
         Next
         ForEach queryRes\mdata\notifications()

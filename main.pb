@@ -28,7 +28,7 @@ Define iconPRTGOk.i,iconPRTGConn.i,iconPRTGAlert.i
 Define iconNotifyMegaplan.i,iconNotifyPortal.i,iconNotifyPRTG.i
 Define *portalMsg,*prtgMsg
 Define NewList megaplanMessages.megaplanMessage()
-Define currentOpenAction.s
+Define currentOpenAction.s,noFullscreenNotify.b
 Define megaplanTryThread.i,portalTryThread.i,prtgTryThread.i
 Define megaplanCheckThread.i,portalCheckThread.i,prtgCheckThread.i
 Define megaplanKey.s,megaplanAccess.s,megaplanOpenAction.s,megaplanAlerts.i,megaplanLastMsg.i
@@ -63,8 +63,10 @@ CheckBoxGadget(#cbEnableSelfUpdate,10,5,360,20,"Проверять обновл�
 GadgetToolTip(#cbEnableSelfUpdate,"Автоматически проверять обновления каждые 2 часа")
 CheckBoxGadget(#cbEnableDebug,10,25,360,20,"Вести лог")
 GadgetToolTip(#cbEnableDebug,"Сохранять подробный лог действий в " + GetEnvironmentVariable("APPDATA") +"\" + #myName + "\debug.log")
-TrackBarGadget(#tbNotifyTimeout,5,50,365,30,3,100)
-TextGadget(#capNotifyTimeout,10,80,360,20,"",#PB_Text_Center)
+CheckBoxGadget(#cbNoFullscreenNotify,10,45,360,20,"Отключить уведомления в полноэкранном режиме")
+GadgetToolTip(#cbNoFullscreenNotify,"Не показывать уведомления в том случае, если активно полноэкранное приложение")
+TrackBarGadget(#tbNotifyTimeout,5,70,365,30,3,100)
+TextGadget(#capNotifyTimeout,10,100,360,20,"",#PB_Text_Center)
 GadgetToolTip(#tbNotifyTimeout,"Сколько секунд показываются уведомления перед тем как исчезнуть")
 AddGadgetItem(#panTabs,#tabMegaplan,"Мегаплан",iconMegaplanOk)
 CheckBoxGadget(#cbMegaplanEnabled,10,5,360,20,"Включен")
@@ -178,6 +180,7 @@ EndIf
 
 Repeat
   ev = WaitWindowEvent(50)
+  If ev = #wnCleanup : wnCleanup(EventData()) : EndIf
   If ElapsedMilliseconds() - iconChangeTimer >= #trayUpdate
     iconChangeTimer = ElapsedMilliseconds()
     If IsSysTrayIcon(#trayMegaplan) And megaplanAlerts > 0
@@ -235,7 +238,7 @@ Repeat
           megaplanState = #megaplanErr
           ChangeSysTrayIcon(#trayMegaplan,iconMegaplanConn)
           megaplanIcon = iconMegaplanConn
-          message("Неверный логин или пароль для подключения к Мегаплану.",#mError)
+          message("Неверный логин или пароль для подключения к Мегаплану. Если вы уверены, что логин и пароль корректны, то проверьте настройки временной зоны Windows.",#mError)
           HideWindow(#wnd,#False)
         Case #megaplanOk
           toLog("successfully connected to Megaplan!")
@@ -247,7 +250,11 @@ Repeat
           toLog("megaplan alerts: " + Str(megaplanAlerts))
           updateTrayTooltip(#trayMegaplan,megaplanAlerts)
           ForEach megaplanMessages()
-            wnNotify(megaplanMessages()\title,megaplanMessages()\message,megaplanPos,notifyTimeout,#megaplanBgColor,0,FontID(#fTitle),FontID(#fText),iconNotifyMegaplan)
+            If noFullscreenNotify And isFullscreenActive()
+              toLog("supressing Megaplan notification because of the fullscreen app",#lWarn)
+            Else
+              wnNotify(megaplanMessages()\title,megaplanMessages()\message,megaplanPos,notifyTimeout,#megaplanBgColor,0,FontID(#fTitle),FontID(#fText),iconNotifyMegaplan)
+            EndIf
           Next
         Case #megaplanNomsg
           updateTrayTooltip(#trayMegaplan,megaplanAlerts)
@@ -312,7 +319,11 @@ Repeat
           toLog("prtg alerts: " + Str(prtgAlerts))
           updateTrayTooltip(#trayPRTG,prtgAlerts)
           *prtgMsg = EventData()
-          wnNotify("Alerts: " + Str(prtgAlerts),PeekS(*prtgMsg),prtgPos,notifyTimeout,#prtgBgColor,0,FontID(#fTitle),FontID(#fText),iconNotifyPRTG)
+          If noFullscreenNotify And isFullscreenActive()
+            toLog("supressing PRTG notification because of the fullscreen app",#lWarn)
+          Else
+            wnNotify("Alerts: " + Str(prtgAlerts),PeekS(*prtgMsg),prtgPos,notifyTimeout,#prtgBgColor,0,FontID(#fTitle),FontID(#fText),iconNotifyPRTG)
+          EndIf
         Case #prtgNomsg
           updateTrayTooltip(#trayPRTG,prtgAlerts)
       EndSelect
@@ -346,7 +357,6 @@ Repeat
         Die()
     EndSelect
   EndIf
-  If ev = #wnCleanup : wnCleanup(EventData()) : EndIf
   If ev = #PB_Event_Gadget
     Select EventGadget()
       Case #tbNotifyTimeout

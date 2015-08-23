@@ -37,6 +37,9 @@ Procedure prtgCheck(time.i)
     msg = ""
     prev = ""
     curAlerts = 0
+    res = ReplaceString(res,#CR$,"")
+    res = ReplaceString(res,#LF$,"")
+    toLog("PRTG data: " + res)
     If FindString(res,"Unauthorized")
       PostEvent(#prtgEvent,#wnd,0,#prtgFailedLogin)
       ProcedureReturn
