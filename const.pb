@@ -1,14 +1,15 @@
 ﻿#myName = "iSnotify"
-#myVer = "0.6.4"
+#myVer = "0.6.5"
 #aboutstr = #myName+" "+#myVer+#CRLF$+"written by deseven, 2015"+#CRLF$+#CRLF$+"web: deseven.info"+#CRLF$+"mail: de7@deseven.info"
 #myDefUtime = 10
 #trayUpdate = 500
 #checkUpdateTime = 120
 #curlTimeout = 30
 
-#portalBgColor = $c9a380
-#megaplanBgColor = $3dc89a
-#prtgBgColor = $4848ff
+#portalBgColor = $c88200
+#megaplanBgColor = $6f8c2b
+#prtgBgColor = $435bd9
+#textColor = $eeeeee
 
 Enumeration message
   #mInfo

@@ -242,6 +242,9 @@ Repeat
           HideWindow(#wnd,#False)
         Case #megaplanOk
           toLog("successfully connected to Megaplan!")
+          If Not isFullscreenActive()
+            wnNotify("Мегаплан подключен!","",megaplanPos,notifyTimeout,#megaplanBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyMegaplan)
+          EndIf
           megaplanState = #megaplanOk
           ChangeSysTrayIcon(#trayMegaplan,iconMegaplanOk)
           megaplanIcon = iconMegaplanOk
@@ -253,7 +256,7 @@ Repeat
             If noFullscreenNotify And isFullscreenActive()
               toLog("supressing Megaplan notification because of the fullscreen app",#lWarn)
             Else
-              wnNotify(megaplanMessages()\title,megaplanMessages()\message,megaplanPos,notifyTimeout,#megaplanBgColor,0,FontID(#fTitle),FontID(#fText),iconNotifyMegaplan)
+              wnNotify(megaplanMessages()\title,megaplanMessages()\message,megaplanPos,notifyTimeout,#megaplanBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyMegaplan)
             EndIf
           Next
         Case #megaplanNomsg
@@ -311,6 +314,9 @@ Repeat
           HideWindow(#wnd,#False)
         Case #prtgOk
           toLog("successfully connected to PRTG!")
+          If Not isFullscreenActive()
+            wnNotify("PRTG подключен!","",prtgPos,notifyTimeout,#prtgBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyPRTG)
+          EndIf
           prtgState = #prtgOk
           ChangeSysTrayIcon(#trayPRTG,iconPRTGOk)
           prtgIcon = iconPRTGOk
@@ -322,7 +328,7 @@ Repeat
           If noFullscreenNotify And isFullscreenActive()
             toLog("supressing PRTG notification because of the fullscreen app",#lWarn)
           Else
-            wnNotify("Alerts: " + Str(prtgAlerts),PeekS(*prtgMsg),prtgPos,notifyTimeout,#prtgBgColor,0,FontID(#fTitle),FontID(#fText),iconNotifyPRTG)
+            wnNotify("Alerts: " + Str(prtgAlerts),PeekS(*prtgMsg),prtgPos,notifyTimeout,#prtgBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyPRTG)
           EndIf
         Case #prtgNomsg
           updateTrayTooltip(#trayPRTG,prtgAlerts)

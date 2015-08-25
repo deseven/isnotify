@@ -49,8 +49,8 @@ Procedure getRes()
   iconNotifyPortal = ImageID(CatchImage(#PB_Any,?iconNotifyPortal))
   iconNotifyPRTG = ImageID(CatchImage(#PB_Any,?iconNotifyPRTG))
   iconMy = ImageID(CatchImage(#PB_Any,?iconMy))
-  LoadFont(#fTitle,"Arial",12,#PB_Font_HighQuality|#PB_Font_Bold)
-  LoadFont(#fText,"Arial",10,#PB_Font_HighQuality)
+  LoadFont(#fTitle,"Calibri",13,#PB_Font_Bold)
+  LoadFont(#fText,"Calibri",11)
 EndProcedure
 
 Procedure.s str2ansi(string.s)
