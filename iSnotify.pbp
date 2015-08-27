@@ -7,12 +7,12 @@
   <section name="data">
     <explorer view="S:\misc\work\ntest3\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2015-08-25 16:44" user="deseven" host="DE7PC"/>
+    <lastopen date="2015-08-26 01:59" user="deseven" host="DE7PC"/>
   </section>
   <section name="files">
     <file name="const.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="de1ca1d3f1e093953b188418023073c9"/>
+      <fingerprint md5="1cea244bde7c8b2d72200e26b36e6be6"/>
     </file>
     <file name="installer.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -24,7 +24,7 @@
     </file>
     <file name="main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="73ff1198c05bab0ef6f9f08b809344af"/>
+      <fingerprint md5="903f360fe270f8a36e2dd0621efeb537"/>
     </file>
     <file name="mod\megaplan.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
@@ -40,7 +40,7 @@
     </file>
     <file name="proc.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="87c7f25ad9a432943a8f70c44a9be733"/>
+      <fingerprint md5="13e2f1a93b986654c68496d148e10f87"/>
     </file>
     <file name="updater.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -57,7 +57,7 @@
       <icon enable="1">res\main.ico</icon>
       <debugger custom="1" type="console"/>
       <warnings custom="1" type="error"/>
-      <buildcount enable="1" value="21"/>
+      <buildcount enable="1" value="23"/>
     </target>
     <target name="isn_upd" enabled="1" default="0">
       <inputfile value="updater.pb"/>
@@ -66,7 +66,7 @@
       <executable value="build\isn_upd.exe"/>
       <options unicode="1" thread="1" xpskin="1" debug="1"/>
       <temporaryexe value="source"/>
-      <buildcount enable="1" value="21"/>
+      <buildcount enable="1" value="23"/>
     </target>
     <target name="isn_install" enabled="1" default="0">
       <inputfile value="installer.pb"/>
@@ -75,7 +75,7 @@
       <options unicode="1" thread="1" xpskin="1" admin="1" debug="1"/>
       <temporaryexe value="source"/>
       <icon enable="1">res\main.ico</icon>
-      <buildcount enable="1" value="21"/>
+      <buildcount enable="1" value="23"/>
     </target>
     <target name="libmegaplan" enabled="1" default="0">
       <inputfile value="lib\libmegaplan.pbi"/>
@@ -86,7 +86,7 @@
       <options thread="1" debug="1"/>
       <temporaryexe value="source"/>
       <format exe="dll" cpu="0"/>
-      <buildcount enable="1" value="21"/>
+      <buildcount enable="1" value="23"/>
     </target>
   </section>
 </project>

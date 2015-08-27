@@ -3,7 +3,7 @@
 Declare toLog(msg.s,type.b = #mInfo)
 Declare Die()
 Declare.s encDec(string.s,mode.b)
-Declare.s getData(url.s)
+Declare.s simpleGetData(url.s)
 Declare settings(mode.b)
 Declare check()
 
@@ -144,7 +144,7 @@ Procedure.s encDec(string.s,mode.b)
   EndIf
 EndProcedure
 
-Procedure.s getData(url.s)
+Procedure.s simpleGetData(url.s)
   Protected res.b,resData.s,curl.i,agent.s
   curl = curl_easy_init()
   url = str2ansi(url)
@@ -155,16 +155,16 @@ Procedure.s getData(url.s)
     curl_easy_setopt(curl,#CURLOPT_USERAGENT,@agent)
     curl_easy_setopt(curl,#CURLOPT_TIMEOUT,#curlTimeout)
     curl_easy_setopt(curl,#CURLOPT_WRITEFUNCTION,@RW_LibCurl_WriteFunction())
-    res.b = curl_easy_perform(curl)
-    resData.s = RW_LibCurl_GetData()
-    curl_easy_cleanup(curl.i)
+    res = curl_easy_perform(curl)
+    resData = RW_LibCurl_GetData()
+    curl_easy_cleanup(curl)
     If res <> 0
       ProcedureReturn "-1"
     Else
       ProcedureReturn resData
     EndIf
   Else
-    toLog("can't init curl")
+    toLog("can't init curl",#lErr)
   EndIf
 EndProcedure
 
@@ -526,7 +526,7 @@ Procedure checkUpdate(n.i)
   Repeat
     If selfUpdate
       toLog("checking for updates...")
-      version = getData("http://home-nadym.ru/isn/isn.ver")
+      version = simpleGetData("http://home-nadym.ru/isn/isn.ver")
       If version <> "-1" And Len(version) And FindString(version,"isn") = 1 And version <> "isn" + #myVer
         version = RemoveString(version,"isn")
         toLog("found new version " + version)
@@ -558,7 +558,7 @@ Procedure updateTrayTooltip(tray.i,value.i)
       EndIf
     Case #trayPortal
       If IsSysTrayIcon(#trayPortal)
-        SysTrayIconToolTip(#trayPortal,"Portal: " + Str(value))
+        SysTrayIconToolTip(#trayPortal,"Портал: " + Str(value))
       EndIf
     Case #trayPRTG
       If IsSysTrayIcon(#trayPRTG)
@@ -570,11 +570,11 @@ EndProcedure
 Procedure cleanUp()
   Shared megaplanTryThread.i,portalTryThread.i,prtgTryThread.i
   Shared megaplanCheckThread.i,portalCheckThread.i,prtgCheckThread.i
-  Shared prtgKey.s,megaplanKey.s
+  Shared prtgKey.s,megaplanKey.s,portalKey.s
   Shared megaplanState.i,portalState.i,prtgState.i
   Shared megaplanIcon.i,portalIcon.i,prtgIcon.i
   Shared iconMegaplanConn.i,iconPortalConn.i,iconPRTGConn.i
-  Shared megaplanAlerts.i,portalAlerts.i,prtgAlerts.i,megaplanLastMsg.i
+  Shared megaplanAlerts.i,portalAlerts.i,prtgAlerts.i,megaplanLastMsg.i,portalLastMsg.i
   If IsThread(megaplanTryThread) : KillThread(megaplanTryThread) : EndIf
   If IsThread(portalTryThread) : KillThread(portalTryThread) : EndIf
   If IsThread(prtgTryThread) : KillThread(prtgTryThread) : EndIf
@@ -583,9 +583,7 @@ Procedure cleanUp()
   If IsThread(prtgCheckThread) : KillThread(prtgCheckThread) : EndIf
   prtgKey = ""
   megaplanKey = ""
-  megaplanState = #megaplanTry
-  portalState = #portalTry
-  prtgState = #prtgTry
+  portalKey = ""
   megaplanIcon.i = iconMegaplanConn
   portalIcon.i = iconPortalConn
   prtgIcon.i = iconPRTGConn
@@ -593,6 +591,10 @@ Procedure cleanUp()
   portalAlerts = 0
   prtgAlerts = 0
   megaplanLastMsg = 0
+  portalLastMsg = 0
+  megaplanState = #megaplanTry
+  portalState = #portalTry
+  prtgState = #prtgTry
 EndProcedure
 
 ; IDE Options = PureBasic 5.31 (Windows - x86)

@@ -15,7 +15,7 @@ Procedure prtgTry(n.i)
   Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgKey.s,prtgOpenAction.s
   prtgOpenAction = "http://" + prtgURL + "/alarms.htm?filter_status=5&filter_status=4&filter_status=10&filter_status=13&filter_status=14"
   Delay(500)
-  Protected res.s = getData("http://" + prtgURL + "/api/getpasshash.htm?username=" + prtgLogin + "&password=" + prtgPass)
+  Protected res.s = simpleGetData("http://" + prtgURL + "/api/getpasshash.htm?username=" + prtgLogin + "&password=" + prtgPass)
   If FindString(res,"Unauthorized")
     PostEvent(#prtgEvent,#wnd,0,#prtgFailedLogin)
   ElseIf res = "-1"
@@ -32,8 +32,9 @@ Procedure prtgCheck(time.i)
   Protected NewList devices.s()
   dataURL = "http://" + prtgURL + "/api/table.json?content=sensors&output=json&columns=sensor,device,downtimesince&filter_status=5&username=" + prtgLogin + "&passhash=" + prtgKey
   Repeat
+    Delay(1000)
     toLog("getting data from PRTG...")
-    res = getData(dataURL)
+    res = simpleGetData(dataURL)
     msg = ""
     prev = ""
     curAlerts = 0
@@ -46,8 +47,8 @@ Procedure prtgCheck(time.i)
     ElseIf Not Len(res) Or res = "-1"
       PostEvent(#prtgEvent,#wnd,0,#prtgFailed)
       ProcedureReturn
-    ElseIf ParseJSON(0,res,#PB_JSON_NoCase)
-      ExtractJSONStructure(JSONValue(0),@alerts.PRTGalerts,PRTGalerts)
+    ElseIf ParseJSON(#jsonPRTG,res,#PB_JSON_NoCase)
+      ExtractJSONStructure(JSONValue(#jsonPRTG),@alerts.PRTGalerts,PRTGalerts)
       curAlerts = alerts\treesize
       ForEach alerts\sensors()
         If prtgAlertAfter And alerts\sensors()\downtimesince_raw < prtgAlertAfter
@@ -77,7 +78,7 @@ Procedure prtgCheck(time.i)
         PostEvent(#prtgEvent,#wnd,0,#prtgNomsg)
       EndIf
       prtgAlerts = curAlerts
-      FreeJSON(0)
+      FreeJSON(#jsonPRTG)
       ClearStructure(@alerts,PRTGalerts)
       ClearList(devices())
     Else

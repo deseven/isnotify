@@ -1,5 +1,5 @@
 ﻿#myName = "iSnotify"
-#myVer = "0.6.5"
+#myVer = "0.7.1"
 #aboutstr = #myName+" "+#myVer+#CRLF$+"written by deseven, 2015"+#CRLF$+#CRLF$+"web: deseven.info"+#CRLF$+"mail: de7@deseven.info"
 #myDefUtime = 10
 #trayUpdate = 500
@@ -147,9 +147,16 @@ Enumeration events #PB_Event_FirstCustomValue
   #prtgEvent
 EndEnumeration
 
-Structure megaplanMessage
+Enumeration json
+  #jsonMegaplan
+  #jsonPortal
+  #jsonPRTG
+EndEnumeration
+
+Structure message
   title.s
   message.s
+  url.s
 EndStructure
 
 DataSection

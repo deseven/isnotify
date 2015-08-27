@@ -27,12 +27,13 @@ Define iconPortalOk.i,iconPortalConn.i,iconPortalAlert.i
 Define iconPRTGOk.i,iconPRTGConn.i,iconPRTGAlert.i
 Define iconNotifyMegaplan.i,iconNotifyPortal.i,iconNotifyPRTG.i
 Define *portalMsg,*prtgMsg
-Define NewList megaplanMessages.megaplanMessage()
+Define NewList megaplanMessages.message()
+Define NewList portalMessages.message()
 Define currentOpenAction.s,noFullscreenNotify.b
 Define megaplanTryThread.i,portalTryThread.i,prtgTryThread.i
 Define megaplanCheckThread.i,portalCheckThread.i,prtgCheckThread.i
 Define megaplanKey.s,megaplanAccess.s,megaplanOpenAction.s,megaplanAlerts.i,megaplanLastMsg.i
-Define portalOpenAction.s,portalAlerts.i
+Define portalKey.s,portalOpenAction.s,portalAlerts.i,portalLastMsg.i
 Define prtgKey.s,prtgOpenAction.s,prtgAlerts.i
 Define megaplanIcon.i,portalIcon.i,prtgIcon.i
 Define curMegaplanIcon.i,curPortalIcon.i,curPRTGIcon.i
@@ -68,7 +69,7 @@ GadgetToolTip(#cbNoFullscreenNotify,"Не показывать уведомле�
 TrackBarGadget(#tbNotifyTimeout,5,70,365,30,3,100)
 TextGadget(#capNotifyTimeout,10,100,360,20,"",#PB_Text_Center)
 GadgetToolTip(#tbNotifyTimeout,"Сколько секунд показываются уведомления перед тем как исчезнуть")
-AddGadgetItem(#panTabs,#tabMegaplan,"Мегаплан",iconMegaplanOk)
+AddGadgetItem(#panTabs,#tabMegaplan,"Мегаплан",iconMegaplanAlert)
 CheckBoxGadget(#cbMegaplanEnabled,10,5,360,20,"Включен")
 TextGadget(#capMegaplanURL,10,32,100,20,"HTTPS host[:port]")
 StringGadget(#strMegaplanURL,110,30,250,20,"")
@@ -90,7 +91,7 @@ GadgetToolTip(#cbMegaplanRepeatAlert,"Показывать уведомлени�
 TrackBarGadget(#tbMegaplanTime,5,160,365,30,1,12)
 TextGadget(#capMegaplanTime,10,190,360,20,"",#PB_Text_Center)
 GadgetToolTip(#tbMegaplanTime,"Интервал между запросами новых уведомлений")
-AddGadgetItem(#panTabs,#tabPortal,"Портал",iconPortalOk)
+AddGadgetItem(#panTabs,#tabPortal,"Портал",iconPortalAlert)
 CheckBoxGadget(#cbPortalEnabled,10,5,360,20,"Включен")
 TextGadget(#capPortalURL,10,32,100,20,"HTTP host[:port]")
 StringGadget(#strPortalURL,110,30,250,20,"")
@@ -112,7 +113,7 @@ GadgetToolTip(#cbPortalRepeatAlert,"Показывать уведомления 
 TrackBarGadget(#tbPortalTime,5,160,365,30,1,12)
 TextGadget(#capPortalTime,10,190,360,20,"",#PB_Text_Center)
 GadgetToolTip(#tbPortalTime,"Интервал между запросами новых уведомлений")
-AddGadgetItem(#panTabs,#tabPRTG,"PRTG",iconPRTGOk)
+AddGadgetItem(#panTabs,#tabPRTG,"PRTG",iconPRTGAlert)
 CheckBoxGadget(#cbPRTGEnabled,10,5,360,20,"Включен")
 TextGadget(#capPRTGURL,10,32,100,20,"HTTP host[:port]")
 StringGadget(#strPRTGURL,110,30,250,20,"")
@@ -250,7 +251,7 @@ Repeat
           megaplanIcon = iconMegaplanOk
           megaplanCheckThread = CreateThread(@megaplanCheck(),megaplanTime)
         Case #megaplanMsg
-          toLog("megaplan alerts: " + Str(megaplanAlerts))
+          toLog("Megaplan alerts: " + Str(megaplanAlerts))
           updateTrayTooltip(#trayMegaplan,megaplanAlerts)
           ForEach megaplanMessages()
             If noFullscreenNotify And isFullscreenActive()
@@ -286,9 +287,25 @@ Repeat
           HideWindow(#wnd,#False)
         Case #portalOk
           toLog("successfully connected to Portal!")
+          If Not isFullscreenActive()
+            wnNotify("Портал подключен!","",portalPos,notifyTimeout,#portalBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyPortal)
+          EndIf
           portalState = #portalOk
           ChangeSysTrayIcon(#trayPortal,iconPortalOk)
           portalIcon = iconPortalOk
+          portalCheckThread = CreateThread(@portalCheck(),portalTime)
+        Case #portalMsg
+          toLog("Portal alerts: " + Str(portalAlerts))
+          updateTrayTooltip(#trayPortal,portalAlerts)
+          ForEach portalMessages()
+            If noFullscreenNotify And isFullscreenActive()
+              toLog("supressing Portal notification because of the fullscreen app",#lWarn)
+            Else
+              wnNotify(portalMessages()\title,portalMessages()\message,portalPos,notifyTimeout,#portalBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyPortal)
+            EndIf
+          Next
+        Case #portalNomsg
+          updateTrayTooltip(#trayPortal,portalAlerts)
       EndSelect
     EndIf
   EndIf
@@ -322,7 +339,7 @@ Repeat
           prtgIcon = iconPRTGOk
           prtgCheckThread = CreateThread(@prtgCheck(),prtgTime)
         Case #prtgMsg
-          toLog("prtg alerts: " + Str(prtgAlerts))
+          toLog("PRTG alerts: " + Str(prtgAlerts))
           updateTrayTooltip(#trayPRTG,prtgAlerts)
           *prtgMsg = EventData()
           If noFullscreenNotify And isFullscreenActive()

@@ -125,12 +125,12 @@ Procedure megaplanTry(n.i)
     PostEvent(#megaplanEvent,#wnd,0,#megaplanFailedLogin)
   Else
     resData = ReplaceString(resData,#DQUOTE$ + "data" + #DQUOTE$ + ":{",#DQUOTE$ + "mdata" + #DQUOTE$ + ":{")
-    If ParseJSON(1,resData,#PB_JSON_NoCase)
-      ExtractJSONStructure(JSONValue(1),@auth.megaplanAuth,megaplanAuth)
+    If ParseJSON(#jsonMegaplan,resData,#PB_JSON_NoCase)
+      ExtractJSONStructure(JSONValue(#jsonMegaplan),@auth.megaplanAuth,megaplanAuth)
       megaplanKey = auth\mdata("SecretKey")
       megaplanAccess = auth\mdata("AccessId")
       ;Debug megaplanAccess + "/" + megaplanKey
-      FreeJSON(1)
+      FreeJSON(#jsonMegaplan)
       If Len(megaplanKey) And Len(megaplanAccess)
         PostEvent(#megaplanEvent,#wnd,0,#megaplanOk)
       Else
@@ -145,9 +145,10 @@ EndProcedure
 Procedure megaplanCheck(time.i)
   Shared megaplanURL.s,megaplanLogin.s,megaplanKey.s,megaplanAccess.s,megaplanAlerts.i,megaplanLastMsg.i,megaplanRepeatAlert.b
   Protected query.s,resData.s,resHTTP.w,queryRes.megaplanQuery,queryAppRes.megaplanQueryApp,curAlerts.i,tz.s
-  Shared megaplanMessages.megaplanMessage()
+  Shared megaplanMessages.message()
   Protected *resData
   Repeat
+    Delay(1000)
     tz = getTimezone()
     toLog("getting data from Megaplan [" + tz + "]...")
     query = "/BumsCommonApiV01/Informer/notifications.api"
@@ -164,11 +165,8 @@ Procedure megaplanCheck(time.i)
     EndIf
     ;PostEvent(#megaplanEvent,#wnd,0,#megaplanFailed)
     ;ProcedureReturn
-    If resData = "-1"
+    If resData = "-1" Or resData = "0"
       PostEvent(#megaplanEvent,#wnd,0,#megaplanFailed)
-      ProcedureReturn
-    ElseIf resData = "0"
-      PostEvent(#megaplanEvent,#wnd,0,#megaplanFailedLogin)
       ProcedureReturn
     Else
       resData = ReplaceString(resData,#DQUOTE$ + "data" + #DQUOTE$ + ":{",#DQUOTE$ + "mdata" + #DQUOTE$ + ":{")
@@ -177,8 +175,8 @@ Procedure megaplanCheck(time.i)
       resData = ReplaceString(resData,#CR$,"")
       resData = ReplaceString(resData,#LF$,"")
       toLog("Megaplan data: " + resData)
-      If ParseJSON(1,resData,#PB_JSON_NoCase)
-        ExtractJSONStructure(JSONValue(1),@queryRes.megaplanQuery,megaplanQuery)
+      If ParseJSON(#jsonMegaplan,resData,#PB_JSON_NoCase)
+        ExtractJSONStructure(JSONValue(#jsonMegaplan),@queryRes.megaplanQuery,megaplanQuery)
         megaplanAlerts = ListSize(queryRes\mdata\notifications())
         ClearList(megaplanMessages())
         ForEach queryRes\mdata\notifications()
@@ -199,7 +197,7 @@ Procedure megaplanCheck(time.i)
             megaplanLastMsg = queryRes\mdata\notifications()\Id
           EndIf
         Next
-        FreeJSON(1)
+        FreeJSON(#jsonMegaplan)
         If ListSize(queryRes\mdata\notifications()) : ClearList(queryRes\mdata\notifications()) : EndIf
         If megaplanAlerts > 0
           PostEvent(#megaplanEvent,#wnd,0,#megaplanMsg)
