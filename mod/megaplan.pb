@@ -79,32 +79,11 @@ Import "..\lib\libmegaplan.lib"
   mega_query(access_id.s,secret_key.s,query.s,base_url.s,timezone.s,agent.s = #myName + "/" + #myVer)
 EndImport
 
-Procedure.s uEscapedToString(string$) ;can be compiled as both ASCII and Unicode
-  Protected len, pos, hex$, result$, unicode.c, char$, uChar$ = Space(1)
-  len = Len(string$)
-  For pos=1 To len
-    char$ = Mid(string$,pos,1)
-    If char$ = "\" And Mid(string$,pos+1,1) = "u"
-      hex$ = Mid(string$,pos+2,4)
-      If #PB_Compiler_Unicode=#False And Left(hex$,2) <> "00" ;this char can't fit within the extended ASCII table
-        result$ + "?"
-      Else
-        unicode = Val("$"+hex$) ;the returned quad truncates fine
-        PokeC(@uChar$,unicode)
-        result$ + uChar$
-      EndIf
-      pos + 5
-    Else
-      result$ + char$
-    EndIf
-  Next
-  ProcedureReturn result$
-EndProcedure
-
 Procedure megaplanTry(n.i)
-  Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanKey.s,megaplanAccess.s,megaplanOpenAction.s
+  Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanKey.s,megaplanAccess.s,megaplanOpenAction.s,megaplanLastActive.s
   Protected query.s,resData.s,auth.megaplanAuth
   Protected *resData
+  megaplanLastActive = "trying " + FormatDate("%dd.%mm.%yy %hh:%ii:%ss",Date())
   megaplanOpenAction = "http://" + megaplanURL + "/activity/"
   query = "/BumsCommonApiV01/User/authorize.api"
   Delay(500)
@@ -129,7 +108,6 @@ Procedure megaplanTry(n.i)
       ExtractJSONStructure(JSONValue(#jsonMegaplan),@auth.megaplanAuth,megaplanAuth)
       megaplanKey = auth\mdata("SecretKey")
       megaplanAccess = auth\mdata("AccessId")
-      ;Debug megaplanAccess + "/" + megaplanKey
       FreeJSON(#jsonMegaplan)
       If Len(megaplanKey) And Len(megaplanAccess)
         PostEvent(#megaplanEvent,#wnd,0,#megaplanOk)
@@ -143,14 +121,14 @@ Procedure megaplanTry(n.i)
 EndProcedure
 
 Procedure megaplanCheck(time.i)
-  Shared megaplanURL.s,megaplanLogin.s,megaplanKey.s,megaplanAccess.s,megaplanAlerts.i,megaplanLastMsg.i,megaplanRepeatAlert.b
+  Shared megaplanURL.s,megaplanLogin.s,megaplanKey.s,megaplanAccess.s,megaplanAlerts.i,megaplanLastMsg.i,megaplanRepeatAlert.b,megaplanLastActive.s
   Protected query.s,resData.s,resHTTP.w,queryRes.megaplanQuery,queryAppRes.megaplanQueryApp,curAlerts.i,tz.s
   Shared megaplanMessages.message()
   Protected *resData
   Repeat
-    Delay(1000)
+    megaplanLastActive = "checking " + FormatDate("%dd.%mm.%yy %hh:%ii:%ss",Date())
     tz = getTimezone()
-    toLog("getting data from Megaplan [" + tz + "]...")
+    toDebug("getting data from Megaplan [" + tz + "]...")
     query = "/BumsCommonApiV01/Informer/notifications.api"
     *resData = mega_query(str2ansi(megaplanAccess),str2ansi(megaplanKey),str2ansi(query),str2ansi(megaplanURL),str2ansi(tz))
     If *resData
@@ -174,7 +152,7 @@ Procedure megaplanCheck(time.i)
       resData = ReplaceString(resData,#DQUOTE$ + "Content" + #DQUOTE$ + ":{" + #DQUOTE$,#DQUOTE$ + "ContentComment" + #DQUOTE$ + ":{" + #DQUOTE$)
       resData = ReplaceString(resData,#CR$,"")
       resData = ReplaceString(resData,#LF$,"")
-      toLog("Megaplan data: " + resData)
+      toDebug("Megaplan data: " + resData)
       If ParseJSON(#jsonMegaplan,resData,#PB_JSON_NoCase)
         ExtractJSONStructure(JSONValue(#jsonMegaplan),@queryRes.megaplanQuery,megaplanQuery)
         megaplanAlerts = ListSize(queryRes\mdata\notifications())

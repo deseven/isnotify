@@ -11,8 +11,9 @@ Structure portalMessages
 EndStructure
 
 Procedure portalTry(n.i)
-  Shared portalURL.s,portalLogin.s,portalPass.s,portalOpenAction.s,portalKey.s
+  Shared portalURL.s,portalLogin.s,portalPass.s,portalOpenAction.s,portalKey.s,portalLastActive.s
   portalOpenAction = "http://" + portalURL + "/msg"
+  portalLastActive = "trying " + FormatDate("%dd.%mm.%yy %hh:%ii:%ss",Date())
   Delay(500)
   Protected res.s = simpleGetData("http://" + portalURL + "/msg/api/?auth&login=" + portalLogin + "&pass=" + portalPass)
   If res = "-1"
@@ -26,15 +27,15 @@ Procedure portalTry(n.i)
 EndProcedure
 
 Procedure portalCheck(time.i)
-  Shared portalURL.s,portalKey.s,portalAlerts.i,portalLastMsg.i,portalRepeatAlert.b
+  Shared portalURL.s,portalKey.s,portalAlerts.i,portalLastMsg.i,portalRepeatAlert.b,portalLastActive.s
   Protected dataURL.s,post.s,agent.s,curl.i,resData.s,msgData.portalMessages
   Shared portalMessages.message()
   dataURL = str2ansi("http://" + portalURL + "/msg/api/?getMessages")
   post = str2ansi("key=" + portalKey)
   agent = str2ansi(#myName + "/" + #myVer)
   Repeat
-    Delay(1000)
-    toLog("getting data from Portal...")
+    portalLastActive = "checking " + FormatDate("%dd.%mm.%yy %hh:%ii:%ss",Date())
+    toDebug("getting data from Portal...")
     curl = curl_easy_init()
     If curl
       curl_easy_setopt(curl,#CURLOPT_URL,@dataURL)
@@ -52,7 +53,7 @@ Procedure portalCheck(time.i)
         resData = uEscapedToString(resData)
         resData = ReplaceString(resData,#CR$,"")
         resData = ReplaceString(resData,#LF$,"")
-        toLog("Portal data: " + resData)
+        toDebug("Portal data: " + resData)
         If ParseJSON(#jsonPortal,resData,#PB_JSON_NoCase)
           ExtractJSONStructure(JSONValue(#jsonPortal),@msgData.portalMessages,portalMessages)
           portalAlerts = ListSize(msgData\messages())
@@ -92,7 +93,7 @@ Procedure portalCheck(time.i)
         ProcedureReturn
       EndIf
     Else
-      toLog("can't init curl",#lErr)
+      toDebug("can't init curl")
       PostEvent(#portalEvent,#wnd,0,#portalFailed)
       ProcedureReturn
     EndIf

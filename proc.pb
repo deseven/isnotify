@@ -1,17 +1,30 @@
-﻿Define logLock.i = CreateMutex()
-
-Declare toLog(msg.s,type.b = #mInfo)
-Declare Die()
+﻿Declare runLock()
+Declare.b isFullscreenActive()
+Declare getRes()
+Declare.s str2ansi(string.s)
+Declare.s MD5AsciiFingerprint(s.s)
+Declare message(message.s,type.b = #mInfo)
+Declare toLog(msg.s,type.b = #lInfo)
+Declare toDebug(msg.s)
+Declare die()
+Declare.s getTimezone()
 Declare.s encDec(string.s,mode.b)
 Declare.s simpleGetData(url.s)
 Declare settings(mode.b)
-Declare check()
+Declare populateInternal()
+Declare populateGUI()
+Declare checkSettings()
+Declare checkUpdate(n.i)
+Declare updateTrayTooltip(tray.i,value.i)
+Declare cleanUp()
+Declare.s uEscapedToString(string$)
+Declare watchDog(time.i)
 
 Procedure runLock()
-  Protected app.i
-  app = CreateSemaphore_(0,0,1,"sol" + #myName)
-  If app <> 0 And GetLastError_() = #ERROR_ALREADY_EXISTS
-    CloseHandle_(app)
+  Shared appLock.i
+  appLock = CreateSemaphore_(0,0,1,"sol" + #myName)
+  If appLock <> 0 And GetLastError_() = #ERROR_ALREADY_EXISTS
+    CloseHandle_(appLock)
     ProcedureReturn #False
   EndIf
   ProcedureReturn #True
@@ -82,7 +95,7 @@ Procedure message(message.s,type.b = #mInfo)
 EndProcedure
 
 Procedure toLog(msg.s,type.b = #lInfo)
-  Shared enableDebug.b,logLock.i
+  Shared enableDebug.b,logLast.s
   Protected log.s,logdate.s,logtype.s
   logdate = FormatDate("[%dd.%mm.%yy %hh:%ii:%ss] ",Date())
   Select type
@@ -95,18 +108,28 @@ Procedure toLog(msg.s,type.b = #lInfo)
   EndSelect
   If enableDebug
     log = GetEnvironmentVariable("APPDATA") + "\" + #myName + "\debug.log"
-    LockMutex(logLock)
+    If FileSize(log) >= 5242880
+      RenameFile(log,log + FormatDate(".%dd-%mm-%yyyy.",Date()) + "old")
+    EndIf
     If OpenFile(0,log,#PB_File_Append)
       WriteStringN(0,logdate + logtype + msg)
       CloseFile(0)
     EndIf
-    UnlockMutex(logLock)
   EndIf
   Debug logdate + logtype + msg
+  logLast = logdate + logtype + msg
 EndProcedure
 
-Procedure Die()
+Procedure toDebug(msg.s)
+  Protected logdate.s
+  logdate = FormatDate("[%dd.%mm.%yy %hh:%ii:%ss] ",Date())
+  Debug logdate + "[DEBUG] " + msg
+EndProcedure
+
+Procedure die()
+  Shared appLock.i
   toLog("exiting")
+  CloseHandle_(appLock)
   End 0
 EndProcedure
 
@@ -164,12 +187,12 @@ Procedure.s simpleGetData(url.s)
       ProcedureReturn resData
     EndIf
   Else
-    toLog("can't init curl",#lErr)
+    toDebug("can't init curl")
   EndIf
 EndProcedure
 
 Procedure settings(mode.b)
-  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b
+  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b,trayBlink.b,onClick.b
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
   Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
@@ -194,7 +217,17 @@ Procedure settings(mode.b)
     Else
       noFullscreenNotify = #False
     EndIf
-    notifyTimeout = ReadPreferenceLong("notification_timeout",4000)
+    If ReadPreferenceString("tray_blink","no") = "yes"
+      trayBlink = #True
+    Else
+      trayBlink = #False
+    EndIf
+    notifyTimeout = ReadPreferenceLong("notification_timeout",6000)
+    If notifyTimeout = #wnForever
+      onClick = #wnClose
+    Else
+      onClick = #wnNothing
+    EndIf
     If ReadPreferenceString("enable_megaplan","no") = "yes"
       enableMegaplan = #True
     Else
@@ -215,7 +248,7 @@ Procedure settings(mode.b)
     megaplanLogin = ReadPreferenceString("login","")
     megaplanPass = encDec(ReadPreferenceString("password",""),#decode)
     megaplanTime = ReadPreferenceLong("update_time",30)
-    megaplanPos = ReadPreferenceLong("notify_position",#wnRB)
+    megaplanPos = ReadPreferenceLong("notify_position",#wnLB)
     If ReadPreferenceString("repeat_alert","no") = "yes"
       megaplanRepeatAlert = #True
     Else
@@ -226,7 +259,7 @@ Procedure settings(mode.b)
     portalLogin = ReadPreferenceString("login","")
     portalPass = encDec(ReadPreferenceString("password",""),#decode)
     portalTime = ReadPreferenceLong("update_time",30)
-    portalPos = ReadPreferenceLong("notify_position",#wnRB)
+    portalPos = ReadPreferenceLong("notify_position",#wnRT)
     If ReadPreferenceString("repeat_alert","no") = "yes"
       portalRepeatAlert = #True
     Else
@@ -259,6 +292,11 @@ Procedure settings(mode.b)
       WritePreferenceString("disable_fullscreen_notify","yes")
     Else
       WritePreferenceString("disable_fullscreen_notify","no")
+    EndIf
+    If trayBlink
+      WritePreferenceString("tray_blink","yes")
+    Else
+      WritePreferenceString("tray_blink","no")
     EndIf
     WritePreferenceLong("notification_timeout",notifyTimeout)
     If enableMegaplan
@@ -315,7 +353,7 @@ Procedure settings(mode.b)
 EndProcedure
 
 Procedure populateInternal()
-  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b
+  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b,trayBlink.b,onClick.b
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
   Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
@@ -335,7 +373,18 @@ Procedure populateInternal()
   Else
     noFullscreenNotify = #False
   EndIf
-  notifyTimeout = GetGadgetState(#tbNotifyTimeout)*100
+  If GetGadgetState(#cbTrayBlink) = #PB_Checkbox_Checked
+    trayBlink = #True
+  Else
+    trayBlink = #False
+  EndIf
+  If GetGadgetState(#tbNotifyTimeout) > 100
+    notifyTimeout = #wnForever
+    onClick = #wnClose
+  Else
+    notifyTimeout = GetGadgetState(#tbNotifyTimeout)*100
+    onClick = #wnNothing
+  EndIf
   If GetGadgetState(#cbMegaplanEnabled) = #PB_Checkbox_Checked
     enableMegaplan = #True
   Else
@@ -385,7 +434,7 @@ Procedure populateInternal()
 EndProcedure
 
 Procedure populateGUI()
-  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b
+  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b,trayBlink.b
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
   Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
@@ -405,8 +454,18 @@ Procedure populateGUI()
   Else
     SetGadgetState(#cbNoFullscreenNotify,#PB_Checkbox_Unchecked)
   EndIf
-  SetGadgetState(#tbNotifyTimeout,notifyTimeout/100)
-  SetGadgetText(#capNotifyTimeout,"Показывать уведомления " + Str(notifyTimeout) + " мс")
+  If trayBlink
+    SetGadgetState(#cbTrayBlink,#PB_Checkbox_Checked)
+  Else
+    SetGadgetState(#cbTrayBlink,#PB_Checkbox_Unchecked)
+  EndIf
+  If notifyTimeout = #wnForever
+    SetGadgetState(#tbNotifyTimeout,101)
+    SetGadgetText(#capNotifyTimeout,"Закрывать уведомления вручную")
+  Else
+    SetGadgetState(#tbNotifyTimeout,notifyTimeout/100)
+    SetGadgetText(#capNotifyTimeout,"Показывать уведомления " + Str(notifyTimeout) + " мс")
+  EndIf
   If enableMegaplan
     SetGadgetState(#cbMegaplanEnabled,#PB_Checkbox_Checked)
   Else
@@ -525,13 +584,13 @@ Procedure checkUpdate(n.i)
   Protected version.s,minutes.i
   Repeat
     If selfUpdate
-      toLog("checking for updates...")
+      toDebug("checking for updates...")
       version = simpleGetData("http://home-nadym.ru/isn/isn.ver")
       If version <> "-1" And Len(version) And FindString(version,"isn") = 1 And version <> "isn" + #myVer
         version = RemoveString(version,"isn")
-        toLog("found new version " + version)
+        toDebug("found new version " + version)
         If noFullscreenNotify And isFullscreenActive()
-          toLog("supressing update request because of the fullscreen app",#lWarn)
+          toDebug("supressing update request because of the fullscreen app")
         ElseIf message("Обнаружена новая версия, обновиться?",#mQuestion)
           toLog("starting updater...")
           RunProgram(myDir + "\isn_upd.exe",version,myDir)
@@ -581,6 +640,7 @@ Procedure cleanUp()
   If IsThread(megaplanCheckThread) : KillThread(megaplanCheckThread) : EndIf
   If IsThread(portalCheckThread) : KillThread(portalCheckThread) : EndIf
   If IsThread(prtgCheckThread) : KillThread(prtgCheckThread) : EndIf
+  CreateThread(@wnDestroyAll(),#wnAll)
   prtgKey = ""
   megaplanKey = ""
   portalKey = ""
@@ -597,6 +657,110 @@ Procedure cleanUp()
   prtgState = #prtgTry
 EndProcedure
 
+Procedure.s uEscapedToString(string$) ;can be compiled as both ASCII and Unicode
+  Protected len, pos, hex$, result$, unicode.c, char$, uChar$ = Space(1)
+  len = Len(string$)
+  For pos=1 To len
+    char$ = Mid(string$,pos,1)
+    If char$ = "\" And Mid(string$,pos+1,1) = "u"
+      hex$ = Mid(string$,pos+2,4)
+      If #PB_Compiler_Unicode=#False And Left(hex$,2) <> "00" ;this char can't fit within the extended ASCII table
+        result$ + "?"
+      Else
+        unicode = Val("$"+hex$) ;the returned quad truncates fine
+        PokeC(@uChar$,unicode)
+        result$ + uChar$
+      EndIf
+      pos + 5
+    Else
+      result$ + char$
+    EndIf
+  Next
+  ProcedureReturn result$
+EndProcedure
+
+Procedure watchDog(time.i)
+  Shared alive.b,appLock.i,logLast.s
+  Shared megaplanTryThread.i,portalTryThread.i,prtgTryThread.i
+  Shared megaplanCheckThread.i,portalCheckThread.i,prtgCheckThread.i
+  Shared wnThread.i,updateThread.i
+  Shared megaplanState.i,portalState.i,prtgState.i
+  Shared megaplanLastActive.s,portalLastActive.s,prtgLastActive.s
+  Protected ts.s,file.s
+  Repeat
+    If Not alive
+      Delay(time*1000)
+      If Not alive
+        toDebug("watchdog activated!")
+        ts = FormatDate("%dd%mm%yy-%hh%ii%ss",Date())
+        file = GetEnvironmentVariable("APPDATA") + "\" + #myName + "\dump-" + ts + ".txt"
+        If CreateFile(666,file,#PB_File_NoBuffering)
+          ts = FormatDate("%dd.%mm.%yy %hh:%ii:%ss",Date())
+          WriteStringN(666,"[GLOBAL]")
+          WriteStringN(666,"timestamp: " + ts)
+          WriteStringN(666,"last log line: " + logLast)
+          WriteStringN(666,"event offset: " + Str(#PB_EventType_FirstCustomValue))
+          WriteStringN(666,"megaplan state: " + Str(megaplanState))
+          WriteStringN(666,"portal state: " + Str(portalState))
+          WriteStringN(666,"prtg state: " + Str(prtgState))
+          WriteStringN(666,"megaplan last action: " + megaplanLastActive)
+          WriteStringN(666,"portal last action: " + portalLastActive)
+          WriteStringN(666,"prtg last action: " + prtgLastActive)
+          WriteStringN(666,"")
+          WriteStringN(666,"[THREADS]")
+          WriteStringN(666,"main thread: dead")
+          If IsThread(megaplanTryThread)
+            WriteStringN(666,"megaplanTry thread: alive (" + Str(megaplanTryThread) + ")")
+          Else
+            WriteStringN(666,"megaplanTry thread: dead (" + Str(megaplanTryThread) + ")")
+          EndIf
+          If IsThread(megaplanCheckThread)
+            WriteStringN(666,"megaplanCheck thread: alive (" + Str(megaplanCheckThread) + ")")
+          Else
+            WriteStringN(666,"megaplanCheck thread: dead (" + Str(megaplanCheckThread) + ")")
+          EndIf
+          If IsThread(portalTryThread)
+            WriteStringN(666,"portalTry thread: alive (" + Str(portalTryThread) + ")")
+          Else
+            WriteStringN(666,"portalTry thread: dead (" + Str(portalTryThread) + ")")
+          EndIf
+          If IsThread(portalCheckThread)
+            WriteStringN(666,"portalCheck thread: alive (" + Str(portalCheckThread) + ")")
+          Else
+            WriteStringN(666,"portalCheck thread: dead (" + Str(portalCheckThread) + ")")
+          EndIf
+          If IsThread(prtgTryThread)
+            WriteStringN(666,"prtgTry thread: alive (" + Str(prtgTryThread) + ")")
+          Else
+            WriteStringN(666,"prtgTry thread: dead (" + Str(prtgTryThread) + ")")
+          EndIf
+          If IsThread(prtgCheckThread)
+            WriteStringN(666,"prtgCheck thread: alive (" + Str(prtgCheckThread) + ")")
+          Else
+            WriteStringN(666,"prtgCheck thread: dead (" + Str(prtgCheckThread) + ")")
+          EndIf
+          If IsThread(wnThread)
+            WriteStringN(666,"wn thread: alive (" + Str(wnThread) + ")")
+          Else
+            WriteStringN(666,"wn thread: dead (" + Str(wnThread) + ")")
+          EndIf
+          If IsThread(updateThread)
+            WriteStringN(666,"update thread: alive (" + Str(updateThread) + ")")
+          Else
+            WriteStringN(666,"update thread: dead (" + Str(updateThread) + ")")
+          EndIf
+          CloseFile(666)
+        EndIf
+        message("Кажется произошло что-то ужасное и программа зависла. Вся доступная информация была сохранена в файл:" + #CRLF$ + file + #CRLF$ + #CRLF$ + "Просьба отправить его по адресу de7@deseven.info" + #CRLF$ + #CRLF$ + #myName + " будет перезапущен",#mError)
+        CloseHandle_(appLock)
+        RunProgram(ProgramFilename())
+        End 1
+      EndIf
+    EndIf
+    alive = #False
+    Delay(time*1000)
+  ForEver
+EndProcedure
 ; IDE Options = PureBasic 5.31 (Windows - x86)
 ; EnableUnicode
 ; EnableXP

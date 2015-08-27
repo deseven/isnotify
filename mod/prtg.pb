@@ -12,8 +12,9 @@ Structure PRTGalerts
 EndStructure
 
 Procedure prtgTry(n.i)
-  Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgKey.s,prtgOpenAction.s
+  Shared prtgURL.s,prtgLogin.s,prtgPass.s,prtgKey.s,prtgOpenAction.s,prtgLastActive.s
   prtgOpenAction = "http://" + prtgURL + "/alarms.htm?filter_status=5&filter_status=4&filter_status=10&filter_status=13&filter_status=14"
+  prtgLastActive = "trying " + FormatDate("%dd.%mm.%yy %hh:%ii:%ss",Date())
   Delay(500)
   Protected res.s = simpleGetData("http://" + prtgURL + "/api/getpasshash.htm?username=" + prtgLogin + "&password=" + prtgPass)
   If FindString(res,"Unauthorized")
@@ -27,20 +28,20 @@ Procedure prtgTry(n.i)
 EndProcedure
 
 Procedure prtgCheck(time.i)
-  Shared prtgURL.s,prtgLogin.s,prtgKey.s,prtgAlerts.i,prtgRepeatAlert.b,prtgAlertAfter.w
+  Shared prtgURL.s,prtgLogin.s,prtgKey.s,prtgAlerts.i,prtgRepeatAlert.b,prtgAlertAfter.w,prtgLastActive.s
   Protected dataURL.s,res.s,curAlerts.i,msg.s,oldmsg.s,alerts.PRTGalerts,prev.s
   Protected NewList devices.s()
   dataURL = "http://" + prtgURL + "/api/table.json?content=sensors&output=json&columns=sensor,device,downtimesince&filter_status=5&username=" + prtgLogin + "&passhash=" + prtgKey
   Repeat
-    Delay(1000)
-    toLog("getting data from PRTG...")
+    prtgLastActive = "checking " + FormatDate("%dd.%mm.%yy %hh:%ii:%ss",Date())
+    toDebug("getting data from PRTG...")
     res = simpleGetData(dataURL)
     msg = ""
     prev = ""
     curAlerts = 0
     res = ReplaceString(res,#CR$,"")
     res = ReplaceString(res,#LF$,"")
-    toLog("PRTG data: " + res)
+    toDebug("PRTG data: " + res)
     If FindString(res,"Unauthorized")
       PostEvent(#prtgEvent,#wnd,0,#prtgFailedLogin)
       ProcedureReturn
@@ -53,7 +54,7 @@ Procedure prtgCheck(time.i)
       ForEach alerts\sensors()
         If prtgAlertAfter And alerts\sensors()\downtimesince_raw < prtgAlertAfter
           curAlerts - 1
-          toLog("removing fresh alert (" + Str(alerts\sensors()\downtimesince_raw) + " < " + Str(prtgAlertAfter) + ")")
+          toDebug("removing fresh alert (" + Str(alerts\sensors()\downtimesince_raw) + " < " + Str(prtgAlertAfter) + ")")
         Else
           AddElement(devices())
           devices() = alerts\sensors()\device

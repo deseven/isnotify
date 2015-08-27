@@ -1,10 +1,10 @@
 ﻿#myName = "iSnotify"
-#myVer = "0.7.1"
+#myVer = "1.0.0"
 #aboutstr = #myName+" "+#myVer+#CRLF$+"written by deseven, 2015"+#CRLF$+#CRLF$+"web: deseven.info"+#CRLF$+"mail: de7@deseven.info"
 #myDefUtime = 10
 #trayUpdate = 500
 #checkUpdateTime = 120
-#curlTimeout = 30
+#curlTimeout = 10
 
 #portalBgColor = $c88200
 #megaplanBgColor = $6f8c2b
@@ -31,6 +31,7 @@ Enumeration main
   #cbEnableDebug
   #cbEnableSelfUpdate
   #cbNoFullscreenNotify
+  #cbTrayBlink
   #tbNotifyTimeout
   #capNotifyTimeout
   #cbMegaplanEnabled

@@ -1,5 +1,5 @@
 ﻿#ver = "libmegaplan/1.2"
-#curlTimeout = 30
+#curlTimeout = 10
 
 IncludeFile "libcurl-res.pbi"
 IncludeFile "libcurl-inc.pbi"
