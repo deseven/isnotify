@@ -87,7 +87,10 @@ Procedure megaplanTry(n.i)
   megaplanOpenAction = "http://" + megaplanURL + "/activity/"
   query = "/BumsCommonApiV01/User/authorize.api"
   Delay(500)
+  Shared globalCurlLock.i
+  LockMutex(globalCurlLock)
   *resData = mega_auth(str2ansi(megaplanLogin),str2ansi(megaplanPass),str2ansi(megaplanURL))
+  UnlockMutex(globalCurlLock)
   If *resData
     resData = PeekS(*resData,-1,#PB_UTF8)
     If Not Len(resData)
@@ -125,12 +128,15 @@ Procedure megaplanCheck(time.i)
   Protected query.s,resData.s,resHTTP.w,queryRes.megaplanQuery,queryAppRes.megaplanQueryApp,curAlerts.i,tz.s
   Shared megaplanMessages.message()
   Protected *resData
+  Shared globalCurlLock.i
   Repeat
     megaplanLastActive = "checking " + FormatDate("%dd.%mm.%yy %hh:%ii:%ss",Date())
     tz = getTimezone()
     toDebug("getting data from Megaplan [" + tz + "]...")
     query = "/BumsCommonApiV01/Informer/notifications.api"
+    LockMutex(globalCurlLock)
     *resData = mega_query(str2ansi(megaplanAccess),str2ansi(megaplanKey),str2ansi(query),str2ansi(megaplanURL),str2ansi(tz))
+    UnlockMutex(globalCurlLock)
     If *resData
       resData = PeekS(*resData,-1,#PB_UTF8)
       If Not Len(resData)

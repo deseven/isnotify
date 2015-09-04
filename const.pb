@@ -1,5 +1,5 @@
 ﻿#myName = "iSnotify"
-#myVer = "1.0.0"
+#myVer = "1.0.1"
 #aboutstr = #myName+" "+#myVer+#CRLF$+"written by deseven, 2015"+#CRLF$+#CRLF$+"web: deseven.info"+#CRLF$+"mail: de7@deseven.info"
 #myDefUtime = 10
 #trayUpdate = 500

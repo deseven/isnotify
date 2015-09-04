@@ -44,6 +44,7 @@ Define megaplanIcon.i,portalIcon.i,prtgIcon.i
 Define curMegaplanIcon.i,curPortalIcon.i,curPRTGIcon.i
 Define iconChangeTimer = 0
 Define megaplanLastActive.s,portalLastActive.s,prtgLastActive.s
+Define globalCurlLock.i = CreateMutex()
 
 IncludeFile "proc.pb"
 IncludeFile "mod/megaplan.pb"

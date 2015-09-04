@@ -169,6 +169,8 @@ EndProcedure
 
 Procedure.s simpleGetData(url.s)
   Protected res.b,resData.s,curl.i,agent.s
+  Shared globalCurlLock.i
+  LockMutex(globalCurlLock)
   curl = curl_easy_init()
   url = str2ansi(url)
   agent = str2ansi(#myName + "/" + #myVer)
@@ -182,13 +184,14 @@ Procedure.s simpleGetData(url.s)
     resData = RW_LibCurl_GetData()
     curl_easy_cleanup(curl)
     If res <> 0
-      ProcedureReturn "-1"
-    Else
-      ProcedureReturn resData
+      resData = "-1"
     EndIf
   Else
     toDebug("can't init curl")
+    resData = "-1"
   EndIf
+  UnlockMutex(globalCurlLock)
+  ProcedureReturn resData
 EndProcedure
 
 Procedure settings(mode.b)
