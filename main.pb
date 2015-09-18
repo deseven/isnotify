@@ -1,5 +1,5 @@
 ﻿EnableExplicit
-UsePNGImageDecoder()
+UseMD5Fingerprint()
 IncludeFile "../pb-win-notify/wnotify.pbi"
 IncludeFile "lib/libcurl-res.pbi"
 IncludeFile "lib/libcurl-inc.pbi"
@@ -21,7 +21,7 @@ Define ev.i,n.i
 Define enableDebug.b = #False
 Define selfUpdate.b = #True
 Define notifyTimeout.w = 3000
-Define onClick.b = #wnNothing
+Define onClick.b = #wnClickNone
 Define enableMegaplan.b,enablePortal.b,enablePRTG.b
 Define megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
 Define portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
@@ -55,6 +55,8 @@ If Not runLock()
   message("Другой экземпляр программы уже запущен.",#mError)
   End 2
 EndIf
+
+OnErrorCall(@onError())
 
 settings(#load)
 toLog(#myName + " version " + #myVer + " started")
@@ -193,7 +195,7 @@ CreateThread(@watchDog(),10)
 Repeat
   ev = WaitWindowEvent(50)
   alive = #True
-  If ev = #wnCleanup : wnCleanup(EventData()) : EndIf
+  If ev = #wnCleanup : wnCleanup(EventWindow()) : EndIf
   If ElapsedMilliseconds() - iconChangeTimer >= #trayUpdate
     iconChangeTimer = ElapsedMilliseconds()
     If IsSysTrayIcon(#trayMegaplan) And megaplanAlerts > 0
@@ -455,7 +457,7 @@ ForEver
 
 Die()
 
-; IDE Options = PureBasic 5.31 (Windows - x86)
+; IDE Options = PureBasic 5.40 LTS Beta 4 (Windows - x86)
 ; EnableUnicode
 ; EnableXP
 ; EnableBuildCount = 0

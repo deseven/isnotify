@@ -18,11 +18,14 @@ Declare checkUpdate(n.i)
 Declare updateTrayTooltip(tray.i,value.i)
 Declare cleanUp()
 Declare.s uEscapedToString(string$)
+Declare createDump(errorInfo.s = "")
+Declare onError()
 Declare watchDog(time.i)
 
 Procedure runLock()
   Shared appLock.i
-  appLock = CreateSemaphore_(0,0,1,"sol" + #myName)
+  Protected name.s = "sol" + #myName
+  appLock = CreateSemaphore_(0,0,1,@name)
   If appLock <> 0 And GetLastError_() = #ERROR_ALREADY_EXISTS
     CloseHandle_(appLock)
     ProcedureReturn #False
@@ -75,7 +78,8 @@ Procedure.s str2ansi(string.s)
 EndProcedure
 
 Procedure.s MD5AsciiFingerprint(s.s)
-  Protected a.s=s:ProcedureReturn MD5Fingerprint(@a,PokeS(@a,s,-1,#PB_Ascii))  
+  ;Protected a.s=s:ProcedureReturn MD5Fingerprint(@a,PokeS(@a,s,-1,#PB_Ascii))
+  ProcedureReturn StringFingerprint(s,#PB_Cipher_MD5,0,#PB_Ascii)
 EndProcedure
 
 Procedure message(message.s,type.b = #mInfo)
@@ -227,9 +231,9 @@ Procedure settings(mode.b)
     EndIf
     notifyTimeout = ReadPreferenceLong("notification_timeout",6000)
     If notifyTimeout = #wnForever
-      onClick = #wnClose
+      onClick = #wnClickClose
     Else
-      onClick = #wnNothing
+      onClick = #wnClickNone
     EndIf
     If ReadPreferenceString("enable_megaplan","no") = "yes"
       enableMegaplan = #True
@@ -383,10 +387,10 @@ Procedure populateInternal()
   EndIf
   If GetGadgetState(#tbNotifyTimeout) > 100
     notifyTimeout = #wnForever
-    onClick = #wnClose
+    onClick = #wnClickClose
   Else
     notifyTimeout = GetGadgetState(#tbNotifyTimeout)*100
-    onClick = #wnNothing
+    onClick = #wnClickNone
   EndIf
   If GetGadgetState(#cbMegaplanEnabled) = #PB_Checkbox_Checked
     enableMegaplan = #True
@@ -682,89 +686,139 @@ Procedure.s uEscapedToString(string$) ;can be compiled as both ASCII and Unicode
   ProcedureReturn result$
 EndProcedure
 
-Procedure watchDog(time.i)
-  Shared alive.b,appLock.i,logLast.s
+Procedure createDump(errorInfo.s = "")
+  Shared appLock.i,logLast.s
   Shared megaplanTryThread.i,portalTryThread.i,prtgTryThread.i
   Shared megaplanCheckThread.i,portalCheckThread.i,prtgCheckThread.i
   Shared wnThread.i,updateThread.i
   Shared megaplanState.i,portalState.i,prtgState.i
   Shared megaplanLastActive.s,portalLastActive.s,prtgLastActive.s
   Protected ts.s,file.s
+  toDebug("watchdog activated!")
+  ts = FormatDate("%dd%mm%yy-%hh%ii%ss",Date())
+  file = GetEnvironmentVariable("APPDATA") + "\" + #myName + "\dump-" + ts + ".txt"
+  If CreateFile(666,file,#PB_File_NoBuffering)
+    ts = FormatDate("%dd.%mm.%yy %hh:%ii:%ss",Date())
+    WriteStringN(666,"[GLOBAL]")
+    WriteStringN(666,"timestamp: " + ts)
+    WriteStringN(666,"last log line: " + logLast)
+    WriteStringN(666,"event offset: " + Str(#PB_EventType_FirstCustomValue))
+    WriteStringN(666,"megaplan state: " + Str(megaplanState))
+    WriteStringN(666,"portal state: " + Str(portalState))
+    WriteStringN(666,"prtg state: " + Str(prtgState))
+    WriteStringN(666,"megaplan last action: " + megaplanLastActive)
+    WriteStringN(666,"portal last action: " + portalLastActive)
+    WriteStringN(666,"prtg last action: " + prtgLastActive)
+    WriteStringN(666,"")
+    WriteStringN(666,"[THREADS]")
+    If IsThread(megaplanTryThread)
+      WriteStringN(666,"megaplanTry thread: alive (" + Str(megaplanTryThread) + ")")
+    Else
+      WriteStringN(666,"megaplanTry thread: dead (" + Str(megaplanTryThread) + ")")
+    EndIf
+    If IsThread(megaplanCheckThread)
+      WriteStringN(666,"megaplanCheck thread: alive (" + Str(megaplanCheckThread) + ")")
+    Else
+      WriteStringN(666,"megaplanCheck thread: dead (" + Str(megaplanCheckThread) + ")")
+    EndIf
+    If IsThread(portalTryThread)
+      WriteStringN(666,"portalTry thread: alive (" + Str(portalTryThread) + ")")
+    Else
+      WriteStringN(666,"portalTry thread: dead (" + Str(portalTryThread) + ")")
+    EndIf
+    If IsThread(portalCheckThread)
+      WriteStringN(666,"portalCheck thread: alive (" + Str(portalCheckThread) + ")")
+    Else
+      WriteStringN(666,"portalCheck thread: dead (" + Str(portalCheckThread) + ")")
+    EndIf
+    If IsThread(prtgTryThread)
+      WriteStringN(666,"prtgTry thread: alive (" + Str(prtgTryThread) + ")")
+    Else
+      WriteStringN(666,"prtgTry thread: dead (" + Str(prtgTryThread) + ")")
+    EndIf
+    If IsThread(prtgCheckThread)
+      WriteStringN(666,"prtgCheck thread: alive (" + Str(prtgCheckThread) + ")")
+    Else
+      WriteStringN(666,"prtgCheck thread: dead (" + Str(prtgCheckThread) + ")")
+    EndIf
+    If IsThread(wnThread)
+      WriteStringN(666,"wn thread: alive (" + Str(wnThread) + ")")
+    Else
+      WriteStringN(666,"wn thread: dead (" + Str(wnThread) + ")")
+    EndIf
+    If IsThread(updateThread)
+      WriteStringN(666,"update thread: alive (" + Str(updateThread) + ")")
+    Else
+      WriteStringN(666,"update thread: dead (" + Str(updateThread) + ")")
+    EndIf
+    If Len(errorInfo)
+      WriteStringN(666,"")
+      WriteStringN(666,"[ERROR]")
+      WriteString(666,errorInfo)
+    EndIf
+    CloseFile(666)
+  EndIf
+  message("Кажется произошло что-то ужасное и произошла ошибка. Вся доступная информация была сохранена в файл:" + #CRLF$ + file + #CRLF$ + #CRLF$ + "Просьба отправить его по адресу de7@deseven.info" + #CRLF$ + #CRLF$ + #myName + " будет перезапущен",#mError)
+  CloseHandle_(appLock)
+  RunProgram(ProgramFilename())
+  End 1
+EndProcedure
+
+Procedure onError()
+  Protected err.s
+  err + "error message:   " + ErrorMessage()      + #CRLF$
+  err + "error code:      " + Str(ErrorCode())    + #CRLF$  
+  err + "code address:    " + Str(ErrorAddress()) + #CRLF$
+ 
+  If ErrorCode() = #PB_OnError_InvalidMemory   
+    err + "target address:  " + Str(ErrorTargetAddress()) + #CRLF$
+  EndIf
+  If ErrorLine() = -1
+    err + "sourcecode line: disabled" + #CRLF$
+  Else
+    err + "sourcecode line: " + Str(ErrorLine()) + #CRLF$
+    err + "sourcecode file: " + ErrorFile() + #CRLF$
+  EndIf
+  err + "register content:" + #CRLF$
+  CompilerSelect #PB_Compiler_Processor 
+    CompilerCase #PB_Processor_x86
+      err + "EAX = " + Str(ErrorRegister(#PB_OnError_EAX)) + #CRLF$
+      err + "EBX = " + Str(ErrorRegister(#PB_OnError_EBX)) + #CRLF$
+      err + "ECX = " + Str(ErrorRegister(#PB_OnError_ECX)) + #CRLF$
+      err + "EDX = " + Str(ErrorRegister(#PB_OnError_EDX)) + #CRLF$
+      err + "EBP = " + Str(ErrorRegister(#PB_OnError_EBP)) + #CRLF$
+      err + "ESI = " + Str(ErrorRegister(#PB_OnError_ESI)) + #CRLF$
+      err + "EDI = " + Str(ErrorRegister(#PB_OnError_EDI)) + #CRLF$
+      err + "ESP = " + Str(ErrorRegister(#PB_OnError_ESP)) + #CRLF$
+ 
+    CompilerCase #PB_Processor_x64
+      err + "RAX = " + Str(ErrorRegister(#PB_OnError_RAX)) + #CRLF$
+      err + "RBX = " + Str(ErrorRegister(#PB_OnError_RBX)) + #CRLF$
+      err + "RCX = " + Str(ErrorRegister(#PB_OnError_RCX)) + #CRLF$
+      err + "RDX = " + Str(ErrorRegister(#PB_OnError_RDX)) + #CRLF$
+      err + "RBP = " + Str(ErrorRegister(#PB_OnError_RBP)) + #CRLF$
+      err + "RSI = " + Str(ErrorRegister(#PB_OnError_RSI)) + #CRLF$
+      err + "RDI = " + Str(ErrorRegister(#PB_OnError_RDI)) + #CRLF$
+      err + "RSP = " + Str(ErrorRegister(#PB_OnError_RSP)) + #CRLF$
+      err + "display of registers R8-R15 skipped"          + #CRLF$
+  CompilerEndSelect
+  createDump(err)
+EndProcedure
+
+Procedure watchDog(time.i)
+  Shared alive.b,appLock.i
   Repeat
     If Not alive
       Delay(time*1000)
       If Not alive
-        toDebug("watchdog activated!")
-        ts = FormatDate("%dd%mm%yy-%hh%ii%ss",Date())
-        file = GetEnvironmentVariable("APPDATA") + "\" + #myName + "\dump-" + ts + ".txt"
-        If CreateFile(666,file,#PB_File_NoBuffering)
-          ts = FormatDate("%dd.%mm.%yy %hh:%ii:%ss",Date())
-          WriteStringN(666,"[GLOBAL]")
-          WriteStringN(666,"timestamp: " + ts)
-          WriteStringN(666,"last log line: " + logLast)
-          WriteStringN(666,"event offset: " + Str(#PB_EventType_FirstCustomValue))
-          WriteStringN(666,"megaplan state: " + Str(megaplanState))
-          WriteStringN(666,"portal state: " + Str(portalState))
-          WriteStringN(666,"prtg state: " + Str(prtgState))
-          WriteStringN(666,"megaplan last action: " + megaplanLastActive)
-          WriteStringN(666,"portal last action: " + portalLastActive)
-          WriteStringN(666,"prtg last action: " + prtgLastActive)
-          WriteStringN(666,"")
-          WriteStringN(666,"[THREADS]")
-          WriteStringN(666,"main thread: dead")
-          If IsThread(megaplanTryThread)
-            WriteStringN(666,"megaplanTry thread: alive (" + Str(megaplanTryThread) + ")")
-          Else
-            WriteStringN(666,"megaplanTry thread: dead (" + Str(megaplanTryThread) + ")")
-          EndIf
-          If IsThread(megaplanCheckThread)
-            WriteStringN(666,"megaplanCheck thread: alive (" + Str(megaplanCheckThread) + ")")
-          Else
-            WriteStringN(666,"megaplanCheck thread: dead (" + Str(megaplanCheckThread) + ")")
-          EndIf
-          If IsThread(portalTryThread)
-            WriteStringN(666,"portalTry thread: alive (" + Str(portalTryThread) + ")")
-          Else
-            WriteStringN(666,"portalTry thread: dead (" + Str(portalTryThread) + ")")
-          EndIf
-          If IsThread(portalCheckThread)
-            WriteStringN(666,"portalCheck thread: alive (" + Str(portalCheckThread) + ")")
-          Else
-            WriteStringN(666,"portalCheck thread: dead (" + Str(portalCheckThread) + ")")
-          EndIf
-          If IsThread(prtgTryThread)
-            WriteStringN(666,"prtgTry thread: alive (" + Str(prtgTryThread) + ")")
-          Else
-            WriteStringN(666,"prtgTry thread: dead (" + Str(prtgTryThread) + ")")
-          EndIf
-          If IsThread(prtgCheckThread)
-            WriteStringN(666,"prtgCheck thread: alive (" + Str(prtgCheckThread) + ")")
-          Else
-            WriteStringN(666,"prtgCheck thread: dead (" + Str(prtgCheckThread) + ")")
-          EndIf
-          If IsThread(wnThread)
-            WriteStringN(666,"wn thread: alive (" + Str(wnThread) + ")")
-          Else
-            WriteStringN(666,"wn thread: dead (" + Str(wnThread) + ")")
-          EndIf
-          If IsThread(updateThread)
-            WriteStringN(666,"update thread: alive (" + Str(updateThread) + ")")
-          Else
-            WriteStringN(666,"update thread: dead (" + Str(updateThread) + ")")
-          EndIf
-          CloseFile(666)
-        EndIf
-        message("Кажется произошло что-то ужасное и программа зависла. Вся доступная информация была сохранена в файл:" + #CRLF$ + file + #CRLF$ + #CRLF$ + "Просьба отправить его по адресу de7@deseven.info" + #CRLF$ + #CRLF$ + #myName + " будет перезапущен",#mError)
-        CloseHandle_(appLock)
-        RunProgram(ProgramFilename())
-        End 1
+        onError()
       EndIf
     EndIf
     alive = #False
     Delay(time*1000)
   ForEver
 EndProcedure
-; IDE Options = PureBasic 5.31 (Windows - x86)
+; IDE Options = PureBasic 5.40 LTS Beta 4 (Windows - x86)
 ; EnableUnicode
 ; EnableXP
 ; EnableBuildCount = 0

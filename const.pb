@@ -1,5 +1,5 @@
 ﻿#myName = "iSnotify"
-#myVer = "1.0.1"
+#myVer = "1.1.0"
 #aboutstr = #myName+" "+#myVer+#CRLF$+"written by deseven, 2015"+#CRLF$+#CRLF$+"web: deseven.info"+#CRLF$+"mail: de7@deseven.info"
 #myDefUtime = 10
 #trayUpdate = 500
@@ -189,7 +189,7 @@ DataSection
   IncludeBinary "res/my.ico"
 EndDataSection
 
-; IDE Options = PureBasic 5.31 (Windows - x86)
+; IDE Options = PureBasic 5.40 LTS Beta 4 (Windows - x86)
 ; EnableUnicode
 ; EnableXP
 ; EnableBuildCount = 0
