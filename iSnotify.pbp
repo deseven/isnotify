@@ -1,34 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.40 LTS Beta 3 (Windows - x86)">
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.40 LTS Beta 4 (Windows - x86)">
   <section name="config">
     <options closefiles="1" openmode="0" name="iSnotify"/>
   </section>
   <section name="data">
     <explorer view="S:\misc\work\ntest3\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2015-09-18 21:02" user="deseven" host="DE7PC"/>
+    <lastopen date="2015-09-19 03:55" user="deseven" host="DE7PC"/>
   </section>
   <section name="files">
     <file name="const.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="8ce48fa7a37d71587a0afa741d66eadb"/>
+      <fingerprint md5="b6dfee985bf25e29812aedd7f464bf74"/>
     </file>
     <file name="installer.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="4e7b477c7dc0389b7e2b706491463ead"/>
-    </file>
-    <file name="lib\libmegaplan.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="bb13f70aa4d0eeb56e4d4e896d3423d5"/>
+      <fingerprint md5="abdd3bd77cd52917c0b73d9ca2dd0d84"/>
     </file>
     <file name="main.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="762eb9af9c48ddb996fde25cf0ac7f17"/>
+      <fingerprint md5="e64fbf90c683280b598c6ae707506b5b"/>
     </file>
     <file name="mod\megaplan.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
-      <fingerprint md5="a14ee6b2ee5c7e569aba3d98b4b17470"/>
+      <fingerprint md5="47c5c290ac71d1cc09d10c8684b6cd44"/>
     </file>
     <file name="mod\portal.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="++"/>
@@ -40,11 +36,11 @@
     </file>
     <file name="proc.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="3efd8424afcf49147d2af02f558e97e9"/>
+      <fingerprint md5="466e0c81119ae289427be4994f3ff50b"/>
     </file>
     <file name="updater.pb">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="9248c83209e47ee92c1eb1a243fde900"/>
+      <fingerprint md5="6d9db1be55ca86310992cac13b7da442"/>
     </file>
   </section>
   <section name="targets">
@@ -52,13 +48,12 @@
       <inputfile value="main.pb"/>
       <outputfile value="build\isn.exe"/>
       <executable value="build\isn.exe"/>
-      <options unicode="1" thread="1" xpskin="1" debug="1"/>
+      <options unicode="1" thread="1" xpskin="1" onerror="1" debug="1"/>
       <purifier enable="0" granularity="1,1,1,1"/>
       <temporaryexe value="source"/>
       <icon enable="1">res\main.ico</icon>
       <debugger custom="1" type="console"/>
-      <warnings custom="1" type="error"/>
-      <buildcount enable="1" value="29"/>
+      <buildcount enable="1" value="32"/>
     </target>
     <target name="isn_upd" enabled="1" default="0">
       <inputfile value="updater.pb"/>
@@ -82,12 +77,12 @@
       <inputfile value="lib\libmegaplan.pbi"/>
       <outputfile value="libmegaplan.dll"/>
       <commandline value="0.4.0"/>
-      <executable value="libmegaplan.dll"/>
+      <executable value="lib\libmegaplan.dll"/>
       <directory value="build\"/>
       <options thread="1" debug="1"/>
       <temporaryexe value="source"/>
       <format exe="dll" cpu="0"/>
-      <buildcount enable="1" value="29"/>
+      <buildcount enable="1" value="33"/>
     </target>
   </section>
 </project>

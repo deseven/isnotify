@@ -22,7 +22,7 @@ Define dataURL.s,changesURL.s,changes.s
 
 Procedure runLock()
   Protected app.i
-  app = CreateSemaphore_(0,0,1,"solupd" + #myName)
+  app = CreateSemaphore_(0,0,1,@"solupd")
   If app <> 0 And GetLastError_() = #ERROR_ALREADY_EXISTS
     CloseHandle_(app)
     ProcedureReturn #False
@@ -32,12 +32,18 @@ EndProcedure
 
 Procedure doUpdate(n.i)
   Shared dataURL.s,changesURL.s,changes.s,myDir.s
+  Protected f.s
   If ExamineDirectory(0,myDir,"*.*")
     While NextDirectoryEntry(0)
       If DirectoryEntryType(0) = #PB_DirectoryEntry_File
-        If Right(DirectoryEntryName(0),4) = ".dat" Or Right(DirectoryEntryName(0),4) = ".old" 
+        f = LCase(DirectoryEntryName(0))
+        If Right(f,4) = ".dat" Or Right(f,4) = ".old" 
           DeleteFile(DirectoryEntryName(0),#PB_FileSystem_Force)
         EndIf
+        Select f
+          Case "isn_install.exe","isn_dbg.exe","libcurl.dll","libeay32.dll","libidn-11.dll","librtmp.dll","libssh2.dll","ssleay32.dll","zlib1.dll"
+            DeleteFile(DirectoryEntryName(0),#PB_FileSystem_Force)
+        EndSelect
       EndIf
     Wend
     FinishDirectory(0)
@@ -104,7 +110,7 @@ Else
 EndIf
 
 If Not runLock()
-  MessageBox_(WindowID(0),"Другой экземпляр программы автообновления уже запущен.",#myName,#MB_OK|#MB_ICONERROR)
+  MessageBox_(0,"Другой экземпляр программы автообновления уже запущен.",#myName,#MB_OK|#MB_ICONERROR)
   End
 EndIf
 
@@ -121,28 +127,28 @@ Repeat
       SetGadgetState(0,10)
       SetGadgetText(1,"Подготовка...")
     Case #errorClean
-      MessageBox_(WindowID(0),"Не удалось провести предварительную очистку. Пожалуйста удостоверьтесь, что директория '" + myDir + "' доступна для записи и начните обновление заново",#myName,#MB_OK|#MB_ICONERROR)
+      MessageBox_(0,"Не удалось провести предварительную очистку. Пожалуйста удостоверьтесь, что директория '" + myDir + "' доступна для записи и начните обновление заново",#myName,#MB_OK|#MB_ICONERROR)
       End 1
     Case #started
       SetGadgetState(0,15)
       SetGadgetText(1,"Скачиваем обновление...")
     Case #errorStart
-      MessageBox_(WindowID(0),"Не удалось инцииализировать сеть.",#myName,#MB_OK|#MB_ICONERROR)
+      MessageBox_(0,"Не удалось инцииализировать сеть.",#myName,#MB_OK|#MB_ICONERROR)
       End 2
     Case #downloaded
       SetGadgetState(0,40)
       SetGadgetText(1,"Устанавливаем обновление...")
     Case #errorDown
-      MessageBox_(WindowID(0),"Не удалось скачать обновление. Проверьте доступ к интернету или попробуйте еще раз позднее.",#myName,#MB_OK|#MB_ICONERROR)
+      MessageBox_(0,"Не удалось скачать обновление. Проверьте доступ к интернету или попробуйте еще раз позднее.",#myName,#MB_OK|#MB_ICONERROR)
       End 3
     Case #unpacked
       SetGadgetState(0,90)
       SetGadgetText(1,"Получаем список изменений...")
     Case #errorUnp
-      MessageBox_(WindowID(0),"Скачанное обновление повреждено. Проверьте ваш интернет или попробуйте еще раз позднее.",#myName,#MB_OK|#MB_ICONERROR)
+      MessageBox_(0,"Скачанное обновление повреждено. Проверьте ваш интернет или попробуйте еще раз позднее.",#myName,#MB_OK|#MB_ICONERROR)
       End 4
     Case #errorUnpLock
-      MessageBox_(WindowID(0),"Не удалось установить обновление. Пожалуйста удостоверьтесь, что директория '" + myDir + "' доступна для записи и начните обновление заново",#myName,#MB_OK|#MB_ICONERROR)
+      MessageBox_(0,"Не удалось установить обновление. Пожалуйста удостоверьтесь, что директория '" + myDir + "' доступна для записи и начните обновление заново",#myName,#MB_OK|#MB_ICONERROR)
       End 5
     Case #finished
       SetGadgetState(0,90)
@@ -151,16 +157,16 @@ Repeat
         changes = #CRLF$ + #CRLF$ + "Изменения:" + #CRLF$ + changes
       EndIf
       If ProgramParameter(0) = "release"
-        MessageBox_(WindowID(0),#myName + " успешно установлен.",#myName,#MB_OK|#MB_ICONINFORMATION)
+        MessageBox_(0,#myName + " успешно установлен.",#myName,#MB_OK|#MB_ICONINFORMATION)
       Else
-        MessageBox_(WindowID(0),#myName + " успешно обновлен до версии " + ProgramParameter(0) + changes,#myName,#MB_OK|#MB_ICONINFORMATION)
+        MessageBox_(0,#myName + " успешно обновлен до версии " + ProgramParameter(0) + changes,#myName,#MB_OK|#MB_ICONINFORMATION)
       EndIf
       RunProgram("isn.exe","",myDir)
       End 0
   EndSelect
 ForEver
 
-; IDE Options = PureBasic 5.31 (Windows - x86)
+; IDE Options = PureBasic 5.40 LTS Beta 4 (Windows - x86)
 ; EnableUnicode
 ; EnableXP
 ; EnableBuildCount = 0

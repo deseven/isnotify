@@ -183,9 +183,9 @@ Procedure.s simpleGetData(url.s)
     curl_easy_setopt(curl,#CURLOPT_IPRESOLVE,#CURL_IPRESOLVE_V4)
     curl_easy_setopt(curl,#CURLOPT_USERAGENT,@agent)
     curl_easy_setopt(curl,#CURLOPT_TIMEOUT,#curlTimeout)
-    curl_easy_setopt(curl,#CURLOPT_WRITEFUNCTION,@RW_LibCurl_WriteFunction())
+    curl_easy_setopt(curl,#CURLOPT_WRITEFUNCTION,@curlWriteData())
     res = curl_easy_perform(curl)
-    resData = RW_LibCurl_GetData()
+    resData = curlGetData()
     curl_easy_cleanup(curl)
     If res <> 0
       resData = "-1"

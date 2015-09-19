@@ -1,8 +1,8 @@
 ﻿EnableExplicit
 UseMD5Fingerprint()
+InitNetwork()
 IncludeFile "../pb-win-notify/wnotify.pbi"
-IncludeFile "lib/libcurl-res.pbi"
-IncludeFile "lib/libcurl-inc.pbi"
+IncludeFile "lib/libcurl.pbi"
 IncludeFile "const.pb"
 
 EnableExplicit
@@ -10,7 +10,6 @@ EnableExplicit
 Define appLock.i
 Define alive.b
 Define logLast.s
-Define wnThread.i,updateThread.i
 Define myDir.s = GetPathPart(ProgramFilename())
 Define myAppName.s = GetFilePart(ProgramFilename())
 Define megaplanState.i = #megaplanTry
@@ -32,9 +31,11 @@ Define iconPortalOk.i,iconPortalConn.i,iconPortalAlert.i
 Define iconPRTGOk.i,iconPRTGConn.i,iconPRTGAlert.i
 Define iconNotifyMegaplan.i,iconNotifyPortal.i,iconNotifyPRTG.i
 Define *portalMsg,*prtgMsg
+Define *mega_version
 Define NewList megaplanMessages.message()
 Define NewList portalMessages.message()
 Define currentOpenAction.s,noFullscreenNotify.b,trayBlink.b
+Define wnThread.i,updateThread.i
 Define megaplanTryThread.i,portalTryThread.i,prtgTryThread.i
 Define megaplanCheckThread.i,portalCheckThread.i,prtgCheckThread.i
 Define megaplanKey.s,megaplanAccess.s,megaplanOpenAction.s,megaplanAlerts.i,megaplanLastMsg.i
@@ -60,12 +61,15 @@ OnErrorCall(@onError())
 
 settings(#load)
 toLog(#myName + " version " + #myVer + " started")
+*mega_version = mega_version()
+If *mega_version
+  toLog("using " + PeekS(*mega_version,-1,#PB_Ascii))
+EndIf
 toLog("loading resources...")
 getRes()
 
 toLog("creating GUI...")
 OpenWindow(#wnd,#PB_Ignore,#PB_Ignore,400,400,#myName,#PB_Window_SystemMenu|#PB_Window_ScreenCentered|#PB_Window_Invisible)
-;SmartWindowRefresh(#wnd,#True)
 StickyWindow(#wnd,#True)
 PanelGadget(#panTabs,10,10,380,340)
 AddGadgetItem(#panTabs,#tabMain,"Основные",iconMy)

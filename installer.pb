@@ -4,7 +4,7 @@
 
 Procedure runLock()
   Protected app.i
-  app = CreateSemaphore_(0,0,1,"solinst")
+  app = CreateSemaphore_(0,0,1,@"solinst")
   If app <> 0 And GetLastError_() = #ERROR_ALREADY_EXISTS
     CloseHandle_(app)
     ProcedureReturn #False
@@ -13,7 +13,7 @@ Procedure runLock()
 EndProcedure
 
 If Not runLock()
-  MessageBox_(WindowID(0),"Другой экземпляр программы установки уже запущен.",#myName,#MB_OK|#MB_ICONERROR)
+  MessageBox_(0,"Другой экземпляр программы установки уже запущен.",#myName,#MB_OK|#MB_ICONERROR)
   End
 EndIf
 
@@ -54,7 +54,7 @@ Else
   MessageBox_(0,"Не удалось загрузить дистрибутив.",#myName,#MB_OK|#MB_ICONERROR)
   End 3
 EndIf
-; IDE Options = PureBasic 5.31 (Windows - x86)
+; IDE Options = PureBasic 5.40 LTS Beta 4 (Windows - x86)
 ; EnableUnicode
 ; EnableXP
 ; EnableBuildCount = 0

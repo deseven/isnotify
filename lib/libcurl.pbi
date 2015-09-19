@@ -1,4 +1,4 @@
-Enumeration 0
+﻿Enumeration 0
   #CURLE_OK
   #CURLE_UNSUPPORTED_PROTOCOL    ; 1 
   #CURLE_FAILED_INIT             ; 2 
@@ -271,8 +271,9 @@ Enumeration ; CURLversion
   #CURLVERSION_FOURTH
   #CURLVERSION_LAST     ; never actually use this 
 EndEnumeration
+;}
 
-; Constantes 
+;{ Constantes 
 #CURL_IPRESOLVE_WHATEVER  = 0 ; Default resolves addresses To all IP versions that your system allows 
 #CURL_IPRESOLVE_V4        = 1 ; resolve To ipv4 addresses 
 #CURL_IPRESOLVE_V6        = 2 ; resolve To ipv6 addresses 
@@ -322,7 +323,7 @@ EndEnumeration
 
 #CURL_MAX_WRITE_SIZE      = 16384
 #CURL_READFUNC_ABORT      = $10000000
-
+;{ #CURLINFO
 #CURLINFO_STRING   = $100000
 #CURLINFO_LONG     = $200000
 #CURLINFO_DOUBLE   = $300000
@@ -750,7 +751,8 @@ EndEnumeration
 #CURLOPT_NEW_DIRECTORY_PERMS= #CURLOPTTYPE_LONG + 160
 ; CURLOPT_LASTENTRY ; the last unused 
 #CURLOPT_FTPLISTONLY =  #CURLOPT_DIRLISTONLY
-
+;}
+;{ #HTTPPOST
 #HTTPPOST_FILENAME    = 1<<0 ; specified content is a file name 
 #HTTPPOST_READFILE    = 1<<1 ; specified content is a file name 
 #HTTPPOST_PTRNAME     = 1<<2 ; name is only stored pointer
@@ -759,6 +761,7 @@ EndEnumeration
                              ; do Not free in formfree 
 #HTTPPOST_BUFFER      = 1<<4 ; upload file from buffer 
 #HTTPPOST_PTRBUFFER   = 1<<5 ; upload file from pointer contents 
+                             ;}
 
 ; #CURLE_OBSOLETE                     = #CURLE_OBSOLETE50   ; noone should be using this! 
 ; #CURLE_BAD_PASSWORD_ENTERED         = #CURLE_OBSOLETE46
@@ -866,7 +869,6 @@ EndEnumeration
 #CURL_VERSION_SSPI      = 1<<11  ;SSPI is supported 
 #CURL_VERSION_CONV      = 1<<12  ;character conversions are supported 
 
-; \\added changes by longshot @ 04/02/2013
 Structure Curl_HTTPPost
   *Next_.Curl_HTTPPost ; Next entry in the list
   *name.String         ; Ptr to allocated name
@@ -919,7 +921,90 @@ Structure curl_version_info_data
   *libssh_version.String   ; human readable string
 EndStructure
 
-; IDE Options = PureBasic 5.31 (Windows - x86)
+ImportC "libcurl.lib"   
+  curl_easy_cleanup(handle.i)
+  curl_easy_duphandle(handle.i) 
+  curl_easy_getinfo(curl.i, info_type.i, info.i) 
+  curl_easy_init() 
+  curl_easy_perform(handle.i)
+  curl_easy_reset(handle.i)
+  curl_easy_setopt(handle.i, option.i, parameter.i)
+  curl_easy_strerror(errornum.i) 
+  curl_escape(url.i, length.i) 
+  curl_formadd(firstitem.i, lastitem.i) 
+  curl_formfree(form.i)
+  curl_free(ptr.i) 
+  curl_getdate(datestring.i, now.i) 
+  curl_getenv(name.i) 
+  curl_global_cleanup() 
+  curl_global_init(flags.i) 
+  curl_global_init_mem(flags.i, m.i, f.i, r.i, s.i, c.i) 
+  curl_mprintf(format.i)
+  curl_mfprintf(fd.i, format.i)
+  curl_msprintf(buffer.i, format.i)
+  curl_msnprintf(buffer.i, maxlength.i, format.i) 
+  curl_mvprintf(format.i, args.i) 
+  curl_mvfprintf(fd.i, format.i, args.i) 
+  curl_mvsprintf(buffer.i, format.i, args.i) 
+  curl_mvsnprintf(buffer.i, maxlength.i, format.i, args.i) 
+  curl_maprintf(format.i)
+  curl_mvaprintf(format.i, args.i) 
+  curl_multi_add_handle(multi_handle.i, easy_handle.i) 
+  curl_multi_cleanup(multi_handle.i) 
+  curl_multi_fdset(multi_handle.i, read_fd_set.i, write_fd_set.i, exc_fd_set.i, max_fd.i) 
+  curl_multi_info_read(multi_handle.i, msgs_in_queue.i) 
+  curl_multi_init() 
+  curl_multi_perform(multi_handle.i, running_handles.i) 
+  curl_multi_remove_handle(multi_handle.i, easy_handle.i) 
+  curl_multi_strerror(errornum.i) 
+  curl_share_cleanup(share_handle.i) 
+  curl_share_init() 
+  curl_share_setopt(share.i, option.i, parameter.i) 
+  curl_share_strerror(errornum.i) 
+  curl_slist_append(slist.i, string.p-utf8) 
+  curl_slist_free_all(slist.i) 
+  curl_strequal(str1.i, str2.i) 
+  curl_strnequal(str1.i, str2.i, len.i)
+  curl_unescape(url.i, length.i) 
+  curl_version() 
+  curl_version_info(type.i) 
+EndImport
+
+ImportC "ws2_32.lib"
+EndImport   
+
+ProcedureC  curlWriteData(*ptr, Size, NMemB, *Stream)
+  ;retreives utf-8/ascii encoded data
+  Protected SizeProper.i  = Size & 255
+  Protected NMemBProper.i = NMemB
+  Protected MyDataS.s
+  Shared ReceivedData.s
+  
+  MyDataS = PeekS(*ptr, SizeProper * NMemBProper, #PB_UTF8)
+  ReceivedData + MyDataS
+  ProcedureReturn SizeProper * NMemBProper
+EndProcedure
+
+Procedure.s curlGetData()
+  Shared ReceivedData.s
+  Protected ReturnData.s
+  
+  ReturnData.s = ReceivedData.s
+  ReceivedData.s = ""
+  
+  ProcedureReturn ReturnData.s
+EndProcedure
+
+Procedure str2curl(string.s)
+  Static *curlstring 
+  If *curlstring : FreeMemory(*curlstring) : EndIf
+  *curlstring = AllocateMemory(Len(string) + 1)
+  If *curlstring
+    PokeS(*curlstring,string,-1,#PB_UTF8)
+  EndIf
+  ProcedureReturn *curlstring
+EndProcedure
+; IDE Options = PureBasic 5.40 LTS Beta 4 (Windows - x86)
 ; EnableUnicode
 ; EnableXP
 ; EnableBuildCount = 0

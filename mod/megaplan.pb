@@ -73,21 +73,21 @@ Structure megaplanQueryApp
   mdata.megaplanApprovals
 EndStructure
 
-Import "..\lib\libmegaplan.lib"
+Import "..\..\libmegaplan\binary\libmegaplan.lib"
   mega_comparedates(date1.s,date2.s)
   mega_auth(login.s,password.s,base_url.s,agent.s = #myName + "/" + #myVer)
   mega_query(access_id.s,secret_key.s,query.s,base_url.s,timezone.s,agent.s = #myName + "/" + #myVer)
+  mega_version()
 EndImport
 
 Procedure megaplanTry(n.i)
+  Shared globalCurlLock.i
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanKey.s,megaplanAccess.s,megaplanOpenAction.s,megaplanLastActive.s
   Protected query.s,resData.s,auth.megaplanAuth
   Protected *resData
   megaplanLastActive = "trying " + FormatDate("%dd.%mm.%yy %hh:%ii:%ss",Date())
   megaplanOpenAction = "http://" + megaplanURL + "/activity/"
-  query = "/BumsCommonApiV01/User/authorize.api"
   Delay(500)
-  Shared globalCurlLock.i
   LockMutex(globalCurlLock)
   *resData = mega_auth(str2ansi(megaplanLogin),str2ansi(megaplanPass),str2ansi(megaplanURL))
   UnlockMutex(globalCurlLock)
@@ -196,7 +196,7 @@ Procedure megaplanCheck(time.i)
     Delay(time * 1000)
   ForEver
 EndProcedure
-; IDE Options = PureBasic 5.31 (Windows - x86)
+; IDE Options = PureBasic 5.40 LTS Beta 4 (Windows - x86)
 ; EnableUnicode
 ; EnableXP
 ; EnableBuildCount = 0
