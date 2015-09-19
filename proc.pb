@@ -120,8 +120,8 @@ Procedure toLog(msg.s,type.b = #lInfo)
       CloseFile(0)
     EndIf
   EndIf
-  Debug logdate + logtype + msg
   logLast = logdate + logtype + msg
+  Debug logLast
 EndProcedure
 
 Procedure toDebug(msg.s)
@@ -758,7 +758,7 @@ Procedure createDump(errorInfo.s = "")
     EndIf
     CloseFile(666)
   EndIf
-  message("Кажется произошло что-то ужасное и произошла ошибка. Вся доступная информация была сохранена в файл:" + #CRLF$ + file + #CRLF$ + #CRLF$ + "Просьба отправить его по адресу de7@deseven.info" + #CRLF$ + #CRLF$ + #myName + " будет перезапущен",#mError)
+  message("Кажется случилось что-то ужасное и произошла ошибка. Вся доступная информация была сохранена в файл:" + #CRLF$ + file + #CRLF$ + #CRLF$ + "Просьба отправить его по адресу de7@deseven.info" + #CRLF$ + #CRLF$ + #myName + " будет перезапущен",#mError)
   CloseHandle_(appLock)
   RunProgram(ProgramFilename())
   End 1
@@ -811,14 +811,14 @@ Procedure watchDog(time.i)
     If Not alive
       Delay(time*1000)
       If Not alive
-        onError()
+        createDump()
       EndIf
     EndIf
     alive = #False
     Delay(time*1000)
   ForEver
 EndProcedure
-; IDE Options = PureBasic 5.40 LTS Beta 4 (Windows - x86)
+; IDE Options = PureBasic 5.40 LTS Beta 5 (Windows - x86)
 ; EnableUnicode
 ; EnableXP
 ; EnableBuildCount = 0
