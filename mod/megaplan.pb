@@ -196,7 +196,7 @@ Procedure megaplanCheck(time.i)
     Delay(time * 1000)
   ForEver
 EndProcedure
-; IDE Options = PureBasic 5.40 LTS Beta 4 (Windows - x86)
+; IDE Options = PureBasic 5.40 LTS Beta 5 (Windows - x86)
 ; EnableUnicode
 ; EnableXP
 ; EnableBuildCount = 0

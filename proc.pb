@@ -83,17 +83,19 @@ Procedure.s MD5AsciiFingerprint(s.s)
 EndProcedure
 
 Procedure message(message.s,type.b = #mInfo)
+  Protected wndID.i
+  If IsWindow(#wnd) : wndID = WindowID(#wnd) : EndIf
   Select type
     Case #mError
-      MessageBox_(WindowID(#wnd),message,#myName,#MB_OK|#MB_ICONERROR)
+      MessageBox_(wndID,message,#myName,#MB_OK|#MB_ICONERROR)
     Case #mQuestion
-      If MessageBox_(WindowID(#wnd),message,#myName,#MB_YESNO|#MB_ICONQUESTION) = #IDYES
+      If MessageBox_(wndID,message,#myName,#MB_YESNO|#MB_ICONQUESTION) = #IDYES
         ProcedureReturn #True
       Else
         ProcedureReturn #False
       EndIf
     Default
-      MessageBox_(WindowID(#wnd),message,#myName,#MB_OK|#MB_ICONINFORMATION)
+      MessageBox_(wndID,message,#myName,#MB_OK|#MB_ICONINFORMATION)
   EndSelect
   ProcedureReturn #True
 EndProcedure
@@ -199,7 +201,7 @@ Procedure.s simpleGetData(url.s)
 EndProcedure
 
 Procedure settings(mode.b)
-  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b,trayBlink.b,onClick.b
+  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b,trayBlink.b,onClick.b,groupNotifications.b
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
   Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
@@ -229,6 +231,11 @@ Procedure settings(mode.b)
     Else
       trayBlink = #False
     EndIf
+    If ReadPreferenceString("group_notifications","yes") = "yes"
+      groupNotifications = #True
+    Else
+      groupNotifications = #False
+    EndIf
     notifyTimeout = ReadPreferenceLong("notification_timeout",6000)
     If notifyTimeout = #wnForever
       onClick = #wnClickClose
@@ -255,7 +262,7 @@ Procedure settings(mode.b)
     megaplanLogin = ReadPreferenceString("login","")
     megaplanPass = encDec(ReadPreferenceString("password",""),#decode)
     megaplanTime = ReadPreferenceLong("update_time",30)
-    megaplanPos = ReadPreferenceLong("notify_position",#wnLB)
+    megaplanPos = ReadPreferenceLong("notify_position_new",#wnRB)
     If ReadPreferenceString("repeat_alert","no") = "yes"
       megaplanRepeatAlert = #True
     Else
@@ -266,7 +273,7 @@ Procedure settings(mode.b)
     portalLogin = ReadPreferenceString("login","")
     portalPass = encDec(ReadPreferenceString("password",""),#decode)
     portalTime = ReadPreferenceLong("update_time",30)
-    portalPos = ReadPreferenceLong("notify_position",#wnRT)
+    portalPos = ReadPreferenceLong("notify_position_new",#wnRB)
     If ReadPreferenceString("repeat_alert","no") = "yes"
       portalRepeatAlert = #True
     Else
@@ -276,8 +283,9 @@ Procedure settings(mode.b)
     prtgURL = ReadPreferenceString("url","")
     prtgLogin = ReadPreferenceString("login","")
     prtgPass = encDec(ReadPreferenceString("password",""),#decode)
+    Debug prtgPass
     prtgTime = ReadPreferenceLong("update_time",30)
-    prtgPos = ReadPreferenceLong("notify_position",#wnRB)
+    prtgPos = ReadPreferenceLong("notify_position_new",#wnRB)
     If ReadPreferenceString("repeat_alert","no") = "yes"
       prtgRepeatAlert = #True
     Else
@@ -305,6 +313,11 @@ Procedure settings(mode.b)
     Else
       WritePreferenceString("tray_blink","no")
     EndIf
+    If groupNotifications
+      WritePreferenceString("group_notifications","yes")
+    Else
+      WritePreferenceString("group_notifications","no")
+    EndIf
     WritePreferenceLong("notification_timeout",notifyTimeout)
     If enableMegaplan
       WritePreferenceString("enable_megaplan","yes")
@@ -326,7 +339,7 @@ Procedure settings(mode.b)
     WritePreferenceString("login",megaplanLogin)
     WritePreferenceString("password",encDec(megaplanPass,#encode))
     WritePreferenceLong("update_time",megaplanTime)
-    WritePreferenceLong("notify_position",megaplanPos)
+    WritePreferenceLong("notify_position_new",megaplanPos)
     If megaplanRepeatAlert
       WritePreferenceString("repeat_alert","yes")
     Else
@@ -337,7 +350,7 @@ Procedure settings(mode.b)
     WritePreferenceString("login",portalLogin)
     WritePreferenceString("password",encDec(portalPass,#encode))
     WritePreferenceLong("update_time",portalTime)
-    WritePreferenceLong("notify_position",portalPos)
+    WritePreferenceLong("notify_position_new",portalPos)
     If portalRepeatAlert
       WritePreferenceString("repeat_alert","yes")
     Else
@@ -348,7 +361,7 @@ Procedure settings(mode.b)
     WritePreferenceString("login",prtgLogin)
     WritePreferenceString("password",encDec(prtgPass,#encode))
     WritePreferenceLong("update_time",prtgTime)
-    WritePreferenceLong("notify_position",prtgPos)
+    WritePreferenceLong("notify_position_new",prtgPos)
     If prtgRepeatAlert
       WritePreferenceString("repeat_alert","yes")
     Else
@@ -360,7 +373,7 @@ Procedure settings(mode.b)
 EndProcedure
 
 Procedure populateInternal()
-  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b,trayBlink.b,onClick.b
+  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b,trayBlink.b,onClick.b,groupNotifications.b
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
   Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
@@ -379,6 +392,11 @@ Procedure populateInternal()
     noFullscreenNotify = #True
   Else
     noFullscreenNotify = #False
+  EndIf
+  If GetGadgetState(#cbGroupNotifications) = #PB_Checkbox_Checked
+    groupNotifications = #True
+  Else
+    groupNotifications = #False
   EndIf
   If GetGadgetState(#cbTrayBlink) = #PB_Checkbox_Checked
     trayBlink = #True
@@ -441,7 +459,7 @@ Procedure populateInternal()
 EndProcedure
 
 Procedure populateGUI()
-  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b,trayBlink.b
+  Shared enableDebug.b,selfUpdate.b,notifyTimeout.w,noFullscreenNotify.b,trayBlink.b,groupNotifications.b
   Shared enableMegaplan.b,enablePortal.b,enablePRTG.b
   Shared megaplanURL.s,megaplanLogin.s,megaplanPass.s,megaplanTime.w,megaplanPos.b,megaplanRepeatAlert.b
   Shared portalURL.s,portalLogin.s,portalPass.s,portalTime.w,portalPos.b,portalRepeatAlert.b
@@ -461,6 +479,11 @@ Procedure populateGUI()
   Else
     SetGadgetState(#cbNoFullscreenNotify,#PB_Checkbox_Unchecked)
   EndIf
+  If groupNotifications
+    SetGadgetState(#cbGroupNotifications,#PB_Checkbox_Checked)
+  Else
+    SetGadgetState(#cbGroupNotifications,#PB_Checkbox_Unchecked)
+  EndIf
   If trayBlink
     SetGadgetState(#cbTrayBlink,#PB_Checkbox_Checked)
   Else
@@ -469,9 +492,11 @@ Procedure populateGUI()
   If notifyTimeout = #wnForever
     SetGadgetState(#tbNotifyTimeout,101)
     SetGadgetText(#capNotifyTimeout,"Закрывать уведомления вручную")
+    HideGadget(#cbGroupNotifications,#False)
   Else
     SetGadgetState(#tbNotifyTimeout,notifyTimeout/100)
     SetGadgetText(#capNotifyTimeout,"Показывать уведомления " + Str(notifyTimeout) + " мс")
+    HideGadget(#cbGroupNotifications,#True)
   EndIf
   If enableMegaplan
     SetGadgetState(#cbMegaplanEnabled,#PB_Checkbox_Checked)
@@ -598,7 +623,8 @@ Procedure checkUpdate(n.i)
         toDebug("found new version " + version)
         If noFullscreenNotify And isFullscreenActive()
           toDebug("supressing update request because of the fullscreen app")
-        ElseIf message("Обнаружена новая версия, обновиться?",#mQuestion)
+        Else
+          message("Обнаружена новая версия, " + #myName + " будет обновлен.",#mInfo)
           toLog("starting updater...")
           RunProgram(myDir + "\isn_upd.exe",version,myDir)
           Die()
@@ -647,7 +673,7 @@ Procedure cleanUp()
   If IsThread(megaplanCheckThread) : KillThread(megaplanCheckThread) : EndIf
   If IsThread(portalCheckThread) : KillThread(portalCheckThread) : EndIf
   If IsThread(prtgCheckThread) : KillThread(prtgCheckThread) : EndIf
-  CreateThread(@wnDestroyAll(),#wnAll)
+  wnDestroyAll(#wnAll)
   prtgKey = ""
   megaplanKey = ""
   portalKey = ""
@@ -812,13 +838,15 @@ Procedure watchDog(time.i)
       Delay(time*1000)
       If Not alive
         createDump()
+        ProcedureReturn
       EndIf
     EndIf
     alive = #False
     Delay(time*1000)
   ForEver
 EndProcedure
-; IDE Options = PureBasic 5.40 LTS Beta 5 (Windows - x86)
+; IDE Options = PureBasic 5.40 LTS (Windows - x86)
+; Folding = ----
 ; EnableUnicode
 ; EnableXP
 ; EnableBuildCount = 0

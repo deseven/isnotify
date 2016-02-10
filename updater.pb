@@ -120,6 +120,8 @@ ProgressBarGadget(0,0,0,200,30,0,100)
 TextGadget(1,0,30,200,16,"Очистка...",#PB_Text_Center)
 CreateThread(@doUpdate(),0)
 
+wnd = WindowID(0)
+
 Repeat
   ev = WaitWindowEvent()
   Select ev
@@ -127,28 +129,28 @@ Repeat
       SetGadgetState(0,10)
       SetGadgetText(1,"Подготовка...")
     Case #errorClean
-      MessageBox_(0,"Не удалось провести предварительную очистку. Пожалуйста удостоверьтесь, что директория '" + myDir + "' доступна для записи и начните обновление заново",#myName,#MB_OK|#MB_ICONERROR)
+      MessageBox_(wnd,"Не удалось провести предварительную очистку. Пожалуйста удостоверьтесь, что директория '" + myDir + "' доступна для записи и начните обновление заново",#myName,#MB_OK|#MB_ICONERROR)
       End 1
     Case #started
       SetGadgetState(0,15)
       SetGadgetText(1,"Скачиваем обновление...")
     Case #errorStart
-      MessageBox_(0,"Не удалось инцииализировать сеть.",#myName,#MB_OK|#MB_ICONERROR)
+      MessageBox_(wnd,"Не удалось инцииализировать сеть.",#myName,#MB_OK|#MB_ICONERROR)
       End 2
     Case #downloaded
       SetGadgetState(0,40)
       SetGadgetText(1,"Устанавливаем обновление...")
     Case #errorDown
-      MessageBox_(0,"Не удалось скачать обновление. Проверьте доступ к интернету или попробуйте еще раз позднее.",#myName,#MB_OK|#MB_ICONERROR)
+      MessageBox_(wnd,"Не удалось скачать обновление. Проверьте доступ к интернету или попробуйте еще раз позднее.",#myName,#MB_OK|#MB_ICONERROR)
       End 3
     Case #unpacked
       SetGadgetState(0,90)
       SetGadgetText(1,"Получаем список изменений...")
     Case #errorUnp
-      MessageBox_(0,"Скачанное обновление повреждено. Проверьте ваш интернет или попробуйте еще раз позднее.",#myName,#MB_OK|#MB_ICONERROR)
+      MessageBox_(wnd,"Скачанное обновление повреждено. Проверьте ваш интернет или попробуйте еще раз позднее.",#myName,#MB_OK|#MB_ICONERROR)
       End 4
     Case #errorUnpLock
-      MessageBox_(0,"Не удалось установить обновление. Пожалуйста удостоверьтесь, что директория '" + myDir + "' доступна для записи и начните обновление заново",#myName,#MB_OK|#MB_ICONERROR)
+      MessageBox_(wnd,"Не удалось установить обновление. Пожалуйста удостоверьтесь, что директория '" + myDir + "' доступна для записи и начните обновление заново",#myName,#MB_OK|#MB_ICONERROR)
       End 5
     Case #finished
       SetGadgetState(0,90)
@@ -157,16 +159,16 @@ Repeat
         changes = #CRLF$ + #CRLF$ + "Изменения:" + #CRLF$ + changes
       EndIf
       If ProgramParameter(0) = "release"
-        MessageBox_(0,#myName + " успешно установлен.",#myName,#MB_OK|#MB_ICONINFORMATION)
+        MessageBox_(wnd,#myName + " успешно установлен.",#myName,#MB_OK|#MB_ICONINFORMATION)
       Else
-        MessageBox_(0,#myName + " успешно обновлен до версии " + ProgramParameter(0) + changes,#myName,#MB_OK|#MB_ICONINFORMATION)
+        MessageBox_(wnd,#myName + " успешно обновлен до версии " + ProgramParameter(0) + changes,#myName,#MB_OK|#MB_ICONINFORMATION)
       EndIf
       RunProgram("isn.exe","",myDir)
       End 0
   EndSelect
 ForEver
 
-; IDE Options = PureBasic 5.40 LTS Beta 4 (Windows - x86)
+; IDE Options = PureBasic 5.40 LTS Beta 5 (Windows - x86)
 ; EnableUnicode
 ; EnableXP
 ; EnableBuildCount = 0

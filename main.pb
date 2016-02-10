@@ -1,7 +1,7 @@
 ﻿EnableExplicit
 UseMD5Fingerprint()
 InitNetwork()
-IncludeFile "../pb-win-notify/wnotify.pbi"
+IncludeFile "../pb-win-notify/wn.pbi"
 IncludeFile "lib/libcurl.pbi"
 IncludeFile "const.pb"
 
@@ -16,7 +16,7 @@ Define megaplanState.i = #megaplanTry
 Define portalState.i = #portalTry
 Define prtgState.i = #prtgTry
 Define lastTrayUpdate.i = 0
-Define ev.i,n.i
+Define ev.i,n.i,res.i
 Define enableDebug.b = #False
 Define selfUpdate.b = #True
 Define notifyTimeout.w = 3000
@@ -34,7 +34,7 @@ Define *portalMsg,*prtgMsg
 Define *mega_version
 Define NewList megaplanMessages.message()
 Define NewList portalMessages.message()
-Define currentOpenAction.s,noFullscreenNotify.b,trayBlink.b
+Define currentOpenAction.s,noFullscreenNotify.b,trayBlink.b,groupNotifications.b
 Define wnThread.i,updateThread.i
 Define megaplanTryThread.i,portalTryThread.i,prtgTryThread.i
 Define megaplanCheckThread.i,portalCheckThread.i,prtgCheckThread.i
@@ -46,6 +46,9 @@ Define curMegaplanIcon.i,curPortalIcon.i,curPRTGIcon.i
 Define iconChangeTimer = 0
 Define megaplanLastActive.s,portalLastActive.s,prtgLastActive.s
 Define globalCurlLock.i = CreateMutex()
+Define NewList megaplanNotifications.i()
+Define NewList portalNotifications.i()
+Define NewList prtgNotifications.i()
 
 IncludeFile "proc.pb"
 IncludeFile "mod/megaplan.pb"
@@ -84,6 +87,9 @@ GadgetToolTip(#cbNoFullscreenNotify,"Не показывать уведомле�
 TrackBarGadget(#tbNotifyTimeout,5,90,365,30,3,101)
 TextGadget(#capNotifyTimeout,10,120,360,20,"",#PB_Text_Center)
 GadgetToolTip(#tbNotifyTimeout,"Сколько секунд показываются уведомления перед тем как исчезнуть")
+CheckBoxGadget(#cbGroupNotifications,10,140,360,20,"Группировать уведомления")
+GadgetToolTip(#cbGroupNotifications,"Группировать уведомления по сервису в одно, если их более " + Str(#groupCount) + " штук")
+
 AddGadgetItem(#panTabs,#tabMegaplan,"Мегаплан",iconMegaplanAlert)
 CheckBoxGadget(#cbMegaplanEnabled,10,5,360,20,"Включен")
 TextGadget(#capMegaplanURL,10,32,100,20,"HTTPS host[:port]")
@@ -94,6 +100,7 @@ TextGadget(#capMegaplanPass,10,92,100,20,"Пароль")
 StringGadget(#strMegaplanPass,110,90,150,20,"",#PB_String_Password)
 TextGadget(#capMegaplanPos,10,123,100,20,"Уведомления")
 ComboBoxGadget(#comMegaplanPos,110,120,150,20)
+AddGadgetItem(#comMegaplanPos,0,"Нет")
 AddGadgetItem(#comMegaplanPos,#wnLT,"Слева сверху")
 AddGadgetItem(#comMegaplanPos,#wnLB,"Слева снизу")
 AddGadgetItem(#comMegaplanPos,#wnCT,"Центр сверху")
@@ -106,6 +113,7 @@ GadgetToolTip(#cbMegaplanRepeatAlert,"Показывать уведомлени�
 TrackBarGadget(#tbMegaplanTime,5,160,365,30,1,12)
 TextGadget(#capMegaplanTime,10,190,360,20,"",#PB_Text_Center)
 GadgetToolTip(#tbMegaplanTime,"Интервал между запросами новых уведомлений")
+
 AddGadgetItem(#panTabs,#tabPortal,"Портал",iconPortalAlert)
 CheckBoxGadget(#cbPortalEnabled,10,5,360,20,"Включен")
 TextGadget(#capPortalURL,10,32,100,20,"HTTP host[:port]")
@@ -116,6 +124,7 @@ TextGadget(#capPortalPass,10,92,100,20,"Пароль")
 StringGadget(#strPortalPass,110,90,150,20,"",#PB_String_Password)
 TextGadget(#capPortalPos,10,123,100,20,"Уведомления")
 ComboBoxGadget(#comPortalPos,110,120,150,20)
+AddGadgetItem(#comPortalPos,0,"Нет")
 AddGadgetItem(#comPortalPos,#wnLT,"Слева сверху")
 AddGadgetItem(#comPortalPos,#wnLB,"Слева снизу")
 AddGadgetItem(#comPortalPos,#wnCT,"Центр сверху")
@@ -128,6 +137,7 @@ GadgetToolTip(#cbPortalRepeatAlert,"Показывать уведомления 
 TrackBarGadget(#tbPortalTime,5,160,365,30,1,12)
 TextGadget(#capPortalTime,10,190,360,20,"",#PB_Text_Center)
 GadgetToolTip(#tbPortalTime,"Интервал между запросами новых уведомлений")
+
 AddGadgetItem(#panTabs,#tabPRTG,"PRTG",iconPRTGAlert)
 CheckBoxGadget(#cbPRTGEnabled,10,5,360,20,"Включен")
 TextGadget(#capPRTGURL,10,32,100,20,"HTTP host[:port]")
@@ -138,6 +148,7 @@ TextGadget(#capPRTGPass,10,92,100,20,"Пароль")
 StringGadget(#strPRTGPass,110,90,150,20,"",#PB_String_Password)
 TextGadget(#capPRTGPos,10,123,100,20,"Уведомления")
 ComboBoxGadget(#comPRTGPos,110,120,150,20)
+AddGadgetItem(#comPRTGPos,0,"Нет")
 AddGadgetItem(#comPRTGPos,#wnLT,"Слева сверху")
 AddGadgetItem(#comPRTGPos,#wnLB,"Слева снизу")
 AddGadgetItem(#comPRTGPos,#wnCT,"Центр сверху")
@@ -154,6 +165,7 @@ TrackBarGadget(#tbPRTGAlertAfter,5,215,365,30,0,60)
 TextGadget(#capPRTGAlertAfter,10,245,360,20,"",#PB_Text_Center)
 GadgetToolTip(#tbPRTGAlertAfter,"Показывать уведомление только если неисправность произошла более X секунд назад")
 CloseGadgetList()
+
 ButtonGadget(#btnApply,290,360,100,30,"Применить",#PB_Button_Default)
 ButtonGadget(#btnCancel,180,360,100,30,"Отмена")
 
@@ -261,8 +273,8 @@ Repeat
           HideWindow(#wnd,#False)
         Case #megaplanOk
           toLog("successfully connected to Megaplan!")
-          If Not isFullscreenActive()
-            wnNotify("Мегаплан подключен!","",megaplanPos,3000,#megaplanBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyMegaplan)
+          If Not isFullscreenActive() And megaplanPos
+            ;wnNotify("Мегаплан подключен!","",megaplanPos,3000,#megaplanBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyMegaplan)
           EndIf
           megaplanState = #megaplanOk
           ChangeSysTrayIcon(#trayMegaplan,iconMegaplanOk)
@@ -274,8 +286,12 @@ Repeat
           ForEach megaplanMessages()
             If noFullscreenNotify And isFullscreenActive()
               toLog("supressing Megaplan notification because of the fullscreen app",#lWarn)
-            Else
-              wnNotify(megaplanMessages()\title,megaplanMessages()\message,megaplanPos,notifyTimeout,#megaplanBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyMegaplan,onClick)
+            ElseIf megaplanPos
+              res = wnNotify(megaplanMessages()\title,megaplanMessages()\message,megaplanPos,notifyTimeout,#megaplanBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyMegaplan,onClick)
+              If notifyTimeout = #wnForever
+                AddElement(megaplanNotifications())
+                megaplanNotifications() = res
+              EndIf
             EndIf
           Next
         Case #megaplanNomsg
@@ -305,8 +321,8 @@ Repeat
           HideWindow(#wnd,#False)
         Case #portalOk
           toLog("successfully connected to Portal!")
-          If Not isFullscreenActive()
-            wnNotify("Портал подключен!","",portalPos,3000,#portalBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyPortal)
+          If Not isFullscreenActive() And portalPos
+            ;wnNotify("Портал подключен!","",portalPos,3000,#portalBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyPortal)
           EndIf
           portalState = #portalOk
           ChangeSysTrayIcon(#trayPortal,iconPortalOk)
@@ -315,13 +331,30 @@ Repeat
         Case #portalMsg
           toLog("Portal alerts: " + Str(portalAlerts))
           updateTrayTooltip(#trayPortal,portalAlerts)
-          ForEach portalMessages()
+          If groupNotifications And portalAlerts >= #groupCount And ListSize(portalMessages())
+            ForEach portalNotifications()
+              wnDestroy(portalNotifications())
+            Next
+            ClearList(portalNotifications())
             If noFullscreenNotify And isFullscreenActive()
               toLog("supressing Portal notification because of the fullscreen app",#lWarn)
-            Else
-              wnNotify(portalMessages()\title,portalMessages()\message,portalPos,notifyTimeout,#portalBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyPortal,onClick)
+            ElseIf portalPos
+              AddElement(portalNotifications())
+              portalNotifications() = wnNotify("Портал:","Сообщений: " + Str(portalAlerts),portalPos,notifyTimeout,#portalBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyPortal,onClick)
             EndIf
-          Next
+          Else
+            ForEach portalMessages()
+              If noFullscreenNotify And isFullscreenActive()
+                toLog("supressing Portal notification because of the fullscreen app",#lWarn)
+              ElseIf portalPos
+                res = wnNotify(portalMessages()\title,portalMessages()\message,portalPos,notifyTimeout,#portalBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyPortal,onClick)
+                If notifyTimeout = #wnForever
+                  AddElement(portalNotifications())
+                  portalNotifications() = res
+                EndIf
+              EndIf
+            Next
+          EndIf
         Case #portalNomsg
           updateTrayTooltip(#trayPortal,portalAlerts)
       EndSelect
@@ -349,8 +382,8 @@ Repeat
           HideWindow(#wnd,#False)
         Case #prtgOk
           toLog("successfully connected to PRTG!")
-          If Not isFullscreenActive()
-            wnNotify("PRTG подключен!","",prtgPos,3000,#prtgBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyPRTG)
+          If Not isFullscreenActive() And prtgPos
+            ;wnNotify("PRTG подключен!","",prtgPos,3000,#prtgBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyPRTG)
           EndIf
           prtgState = #prtgOk
           ChangeSysTrayIcon(#trayPRTG,iconPRTGOk)
@@ -362,8 +395,12 @@ Repeat
           *prtgMsg = EventData()
           If noFullscreenNotify And isFullscreenActive()
             toLog("supressing PRTG notification because of the fullscreen app",#lWarn)
-          Else
-            wnNotify("Alerts: " + Str(prtgAlerts),PeekS(*prtgMsg),prtgPos,notifyTimeout,#prtgBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyPRTG,onClick)
+          ElseIf prtgPos
+            res = wnNotify("Alerts: " + Str(prtgAlerts),PeekS(*prtgMsg),prtgPos,notifyTimeout,#prtgBgColor,#textColor,FontID(#fTitle),FontID(#fText),iconNotifyPRTG,onClick)
+            If notifyTimeout = #wnForever
+              AddElement(prtgNotifications())
+              prtgNotifications() = res
+            EndIf
           EndIf
         Case #prtgNomsg
           updateTrayTooltip(#trayPRTG,prtgAlerts)
@@ -382,11 +419,20 @@ Repeat
     If EventType() = #PB_EventType_LeftClick Or EventType() = #PB_EventType_LeftDoubleClick
       Select currentOpenAction
         Case megaplanOpenAction
-          CreateThread(@wnDestroyAll(),megaplanPos)
+          ForEach megaplanNotifications()
+            wnDestroy(megaplanNotifications())
+          Next
+          ClearList(megaplanNotifications())
         Case portalOpenAction
-          CreateThread(@wnDestroyAll(),portalPos)
+          ForEach portalNotifications()
+            wnDestroy(portalNotifications())
+          Next
+          ClearList(portalNotifications())
         Case prtgOpenAction
-          CreateThread(@wnDestroyAll(),prtgPos)
+          ForEach prtgNotifications()
+            wnDestroy(prtgNotifications())
+          Next
+          ClearList(prtgNotifications())
       EndSelect
       RunProgram(currentOpenAction)
     ElseIf EventType() = #PB_EventType_RightClick
@@ -411,8 +457,10 @@ Repeat
       Case #tbNotifyTimeout
         If GetGadgetState(#tbNotifyTimeout) > 100
           SetGadgetText(#capNotifyTimeout,"Закрывать уведомления вручную")
+          HideGadget(#cbGroupNotifications,#False)
         Else
           SetGadgetText(#capNotifyTimeout,"Показывать уведомления " + Str(GetGadgetState(#tbNotifyTimeout)*100) + " мс")
+          HideGadget(#cbGroupNotifications,#True)
         EndIf
       Case #tbMegaplanTime
         SetGadgetText(#capMegaplanTime,"Обновлять каждые " + Str(GetGadgetState(#tbMegaplanTime)*10) + " сек")
@@ -440,19 +488,15 @@ Repeat
         EndIf
       Case #btnCancel
         If EventType() = #PB_EventType_LeftClick
-          If enableMegaplan Or enablePortal Or enablePRTG
-            HideWindow(#wnd,#True)
-            populateGUI()
-          Else
-            Break
-          EndIf
+          ev = #PB_Event_CloseWindow
         EndIf
     EndSelect
   EndIf
   If ev = #PB_Event_CloseWindow
+    settings(#load)
+    populateGUI()
     If enableMegaplan Or enablePortal Or enablePRTG
       HideWindow(#wnd,#True)
-      populateGUI()
     Else
       Break
     EndIf
@@ -461,7 +505,7 @@ ForEver
 
 Die()
 
-; IDE Options = PureBasic 5.40 LTS Beta 4 (Windows - x86)
+; IDE Options = PureBasic 5.40 LTS (Windows - x86)
 ; EnableUnicode
 ; EnableXP
 ; EnableBuildCount = 0
